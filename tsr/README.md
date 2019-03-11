@@ -63,3 +63,10 @@ Again, 10 minutes once I figured out the first one.
 ### The Immortal
 
 Another game I loved. Great mood, great music, and it always hung in the same spot on my PC (even without the crack). I really should try this again someday. Would like to see the ending.
+
+## ANTITANK.ASM
+
+### M1 Tank Platoon
+
+I have literally worn out my manual and game box I played this so much. This had a combination disk and doc check (see labels Patch_1 and Patch_2). There was also anti-debugger protection in that the program wiped out the values for INT 0x01 and INT 0x03 which were needed by the debugger. I wrote a helper program that copied the values of these locations, and on pressing a specific key it restored them. I ran the helper program first, let the protection clobber the debugger vectors, pressed a key to restore debugger vectors (might have been NumLock), then use the debugger to step through the protection and write up a patch.
+

@@ -54,9 +54,34 @@ patch_1        endp
 
 end_resident:
 
-verify_serial  proc near
+mess           proc near                ; AFFECTS FLAGS
+                                        ; Outputs a string
+                                        ; procedure print(var s:string);
+               mov  ah,09h
+               int  21h
+               ret
 
-               clc                              ; Pass for now...
+mess           endp
+
+
+verify_serial  proc near                ; AFFECTS FLAGS
+
+               push ax
+               mov  ax,es
+               inc  ax
+               mov  es,ax               ;INC ES (point to PSP instead of MCB)
+               mov  cx,03h              ; 3 words...
+
+               mov  di,103h             ; Both strings start at 103
+                                        ; in their respective segments...
+               mov  si,di
+               repe cmpsw               ; Compare the Serial #'s
+               je   pass_cmpsw
+               dec  ax                  ; Flags & CX will be set...
+               mov  es,ax               ; restore ES
+
+pass_cmpsw:
+               pop  ax
                ret
 
 verify_serial  endp
@@ -70,52 +95,41 @@ MCB_walker     proc near
                mov ax, es:[bx-2]               ; First MCB address (segment)
                mov es, ax                      ; Toss segment back in ES
 
-               mov bx,05h                      ; An unused word in MCB
                jmp walk_loop                   ; That we'll use for ID
 
 next_bloc:
 
                mov ax, es                      ; Calculate next block in chain
-               mov cx, word ptr es:[3]
-               inc cx                       ; Compensate for MCB size itself!
-               add ax, cx
+               mov bx, word ptr es:[3]
+               inc bx                       ; Compensate for MCB size itself!
+               add ax, bx
                mov es, ax
 
 walk_loop:
 
                mov ah,es:[0]               ; MCB chain (M = Link, Z = end)
-               cmp word ptr es:[bx],0ffffh ; Found our TSR ID byte?
+               cmp word ptr es:[5],0ffffh  ; Found our TSR ID byte?
                jne  n_found_ID
                call verify_serial          ; Was the serial# correct?
-               jc   found_ID               ; Yep, 'its in there...'
+               jnz   n_found_ID
+               ret                         ; Its in there! (ragu)
 n_found_ID:
 
                cmp ah,'M'                  ; No ID found, more blocks though?
                je  next_bloc               ; Yes, keep a chuggin'
                cmp ah,'Z'                  ; Are we at the end of the chain?
-               je  no_ID                   ; Yes, ID NOT FOUND (install TSR)
+               jne no_ID                   ; Yes, ID NOT FOUND (install TSR)
+               ret
 
-
+no_ID:
                                            ; Corrupted MCB chain [FATAL ERROR]
                mov dx, offset fatal_mess   ; If it got past previous checks!
                call mess                   ; Print Fatal error message
-               jmp  terminate              ; Abort....
-
-found_ID:
-
-        mov dx, offset found_mess
-        call mess
-        jmp  terminate
-
-no_ID:
-
-        mov dx, offset no_mess
-        call mess
 
 terminate:
 
-        mov ax,4c00h
-        int 21h
+               mov ax,4c00h
+               int 21h
 
 MCB_walker endp
 
@@ -124,49 +138,74 @@ set_vec          proc near
 
                  assume cs:code,ds:code
 
-                 tsr_size  equ   ((end_resident-start)/16)+17 ;inefficient
-
                  mov    ax,3500h+intvec_1               ;vector swap-age
                  int    21h
                  mov    word ptr [old_vector_1+2],es
                  mov    word ptr [old_vector_1],bx
 
-                
                  mov    ax,2500h+intvec_1
                  mov    dx,offset patch_1
                  push   cs
                  pop    ds
                  int    21h
 
-                 mov    ax,3500h+ser_vec
-                 int    21h
-                 mov    word ptr [ser_vector+2],es
-                 mov    word ptr [ser_vector],bx
-
-
-                 mov    ax,2500h+ser_vec
-                 mov    dx,offset serv
-                 push   cs
-                 pop    ds
-                 int    21h
-
+                 
 set_vec    endp
+
+set_ID           proc near
+
+                 mov  ax,cs             ;Put CS in ax (duh...)
+                 dec  ax                ;Dec 1 (location of MCB)
+                 mov  es,ax             ;put that to ES so that we can->
+                 mov  es:[5],0ffffh     ;put ID marker in unused word in MCB
+                 ret
+
+set_ID           endp
+
+chain_check      proc near
+
+                 or   dx,0FFFFh                  ; DX is pass/fail flag
+                 push es                         ; Save TSR ES
+
+                 mov  ax,3500h+intvec_1          ; Get vector
+                 int  21h
+                 mov  ax, es
+                 pop  es
+                 mov  bx, es
+                 cmp  ax, bx                     ; Does VECTOR match SEG?
+                 jne  fail_chain                 ; NO!  Chained over!!!
+                 xor  dx, dx                     ; Yes, go ahead and remove
+fail_chain:
+                 ret
+
+chain_check      endp
+
+trash_tsr        proc near
+
+                 mov  dx,offset s_r_msg
+                 call mess
+                 jmp  terminate
+
+trash_tsr        endp
 
 
 loader           proc near
 
                  call   MCB_walker      ;is the TSR loaded already?
-                 jnc    install         ;Nope, menu display...
+                 and    cx, cx
+                 jnz    install         ;Nope, menu display...
                  jmp    remove          ;Its there already!  (kill)
 
 install:
                  call   set_ID                  ;Make fix to MCB for ID
                                                 ;4 now, generic text screen
                  mov    dx,offset copy_right    ;Fix this last to look kewl
-                 call   mess
+                 call   mess                    ;Display message (cheap-o)
 
                  call   set_vec                 ;Set up interrupt ptrs...
                  
+                 tsr_size  equ   ((end_resident-start)/16)+17 ;inefficient
+
                  mov    ax,31ffh                ;TSR and take off...
                  mov    dx,tsr_size
                  int    21h
@@ -175,22 +214,15 @@ install:
                  jmp    fatal_error
 
 remove:
-                 cmp    ax,serial               ;Some error messages
-                 je    l2
-                 mov    dx, offset s_err_msg
-                 jmp    fatal_error
-l2:
-                 cmp    bx,version
-                 je    l3
-                 mov    dx,offset v_err_msg
-                 jmp    fatal_error
-l3:
-                 cmp    cx,loader_ver
-                 je    l4
-                 mov    dx,offset l_v_err_msg
-                 jmp    fatal_error
-l4:
+                 
                  mov    dx,offset i_msg
+                 call   mess
+                 call   chain_check
+                 and    dx, dx
+                 jne    fail_remove
+                 jmp    trash_tsr
+fail_remove:
+                 mov    dx,offset f_r_msg
 
 fatal_error:
                  call   mess
@@ -202,17 +234,12 @@ loader           endp
 
    ; Error messages and stuff...(FOR MCB_WALKER)
 
-   fatal_mess db 'BREAK IN MCB CHAIN - SYSTEM WILL CRASH!$'
-   found_mess db 'ID byte for xxx FOUND!$'
-   no_mess    db 'ID byte NOT FOUND for xxx!$'
+   fatal_mess db 'BREAK IN MCB CHAIN - SYSTEM WILL CRASH!',10,13,'$'
 
-   s_err_msg    db  'There is already another Generic TSR installed!',10,13
-   xs1          db  '$'
-   v_err_msg    db  'There is a different version of the PATCH in memory'
-   xv1          db  ' already!',10,13,'$'
-   l_v_err_msg  db  'There is a different version of the SHELL in memory'
-   xlv1         db  ' already!',10,13,'$'
-   i_msg        db  'This patch has already been installed!',10,13,'$'
+   f_r_msg      db  'UNSUCCESSFUL!  (TSR has been chained over!)',10,13,'$'
+   s_r_msg      db  'SUCCESSFUL! (TSR has been totally removed!)',10,13,'$'
+   i_msg        db  'This patch has already been installed!',10,13
+   i_msg_2      db  'Removal has been $'
    u_error      db  'UNEXPECTED ERROR!  (Something is REALLY spammed!)',10,13
    xu1          db  '$'
 

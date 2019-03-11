@@ -36,13 +36,13 @@ This was doc check protected but also had a checksum that notified the players i
 
 ### Indiana Jones and the Fate of Atlantis
 
-This took 10 minutes using the same approach for The Secret of Monkey Island. I just 2x checked the file timestamps and I botched the order I did them.
+This took 10 minutes using the same approach for The Secret of Monkey Island.
 
 ## MONKEY1.ASM
 
 ### The Secret of Monkey Island
 
-Oh man this was hard. I may have been a touch arrogant back then (big fish, small pond, maybe one other person in the area cracked games). This was a lesson in humility. I did my usual stepping and patching on the doc check and called it a day. But as I was playing the game I got stuck on a section that I know should have worked. Hmmmm. Sure enough, restart the game without the patch and pass the protection check legitimately and I got past that area. After more poking around is when I realized they created the copy protection in their interpreter. Stomach sinks. Pupils dialate. Do I have to reverse engineer their bytecode to crack this?
+Oh man this was hard. I may have been a touch arrogant back then (big fish, small pond, maybe one other person in the area cracked games). This was a lesson in humility. I did my usual stepping and patching on the doc check and called it a day. But as I was playing the game I got stuck on a section that I know should have worked. Hmmmm. Sure enough, restart the game without the patch and pass the protection check legitimately and I got past that area. After more poking around is when I realized they created the copy protection in their interpreter. When I patched what I thought was a dedicated protection check I broke the interpreter, breaking the game. Stomach sinks. Pupils dialate. Do I have to reverse engineer their bytecode to crack this?
 
 This was a marathon week where I spent close to 80 hours on this one title. So many failed attempts, and such a blatant disregard for personal hygiene. Inspiration struck on maybe the 5th day. If I passed the protection and restarted the game, it didn't re-run the doc check. So that means there must be a flag somewhere that is set once the protection check is passed.
 

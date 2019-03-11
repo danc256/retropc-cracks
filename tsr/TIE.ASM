@@ -85,7 +85,7 @@ ENDM
                 K_ESC      EQU 011Bh       ; Escape Key keyboard code
                 K_CR       EQU 1C0Dh       ; Return Key keyboard code
                 
-                PATCH_REV  EQU '0.98a BETA'; Version for patch
+                PATCH_REV  EQU '1.00'      ; Version for patch
                 BOOT_ME    EQU 'TIE.EXE'   ; Startup file patch runs
                 
                 TIE_FITR   EQU 195,'0',180 ; ANSI Tie-Fighter (cursor)
@@ -115,7 +115,10 @@ Start:
                 FixShldC   db 00        ; Fix Shield Charging Rate
                 FixLasrC   db 00        ; Fix Laser Charging Rate
                 FixBeamC   db 00        ; Fix Beam Charging Rate
+                FixTrakR   db 00        ; Target Lock rate 
                 FixUnlmA   db 00        ; Unlimited Ammo
+
+                TrakRate   dw 049Ch     ; Actual value for target lock rate
                 
                 BootFile   db BOOT_ME,00h ; Name of startup file
 
@@ -141,10 +144,14 @@ Start:
 
 PHead %IVect_1
                 Cmp     AH, 3Fh                 ; Reading a file?
-                Jne     P1_Skip                 ; No, ignore this call
+                Je      P1_DontSkip             ; No, ignore this call
+                Jmp     P1_Skip
+P1_DontSkip:
 
                 Cmp     CX, 0F800h              ; 2nd part of FLIGHT.OVL?
-                Jne     P1_Skip                 ; Uh-uh.  Skip it.
+                Je      P1_ContNoSkip1          ; Uh-uh.  Skip it.
+                Jmp     P1_Skip
+P1_ContNoSkip1:
 
                 Pushf                           ; Do Call, check for signature
                 MCall   %IVect_1                
@@ -201,7 +208,13 @@ P1_SkipShldC:
                 Mov     Word Ptr DS:[805Ah], AX         ; Beam recharge fix
 
 P1_SkipBeamC:
+                Cmp     CS:[FixTrakR], 00
+                Je      P1_SkipTrakR
+                
+                Mov     AX, Word Ptr CS:[TrakRate]
+                Mov     Word Ptr DS:[7CFBh], AX         ; Target locking rate
 
+P1_SkipTrakR:
                 Pop     AX
                 Iret
 
@@ -217,11 +230,9 @@ TimerHandler  Proc      Near
               Push      BP
               Mov       BP, SP
               
-              Cmp       BX, DS:[09DA0h]         ; Verify that the USER's 
+              Cmp       BX, DS:[0C8B4h]         ; Verify that the USER's 
               Je        IV2_UserUpdate          ; stats are the ones being
-              Cmp       BX, DS:[09D48h]         ; modified, not the computer's.
-              Je        IV2_UserUpdate
-              Jmp       IV2_Skip
+              Jmp       IV2_Skip                ; modified, not the computer's
               
 IV2_UserUpdate:              
               Push      AX
@@ -985,6 +996,7 @@ SetMenu         Proc    Near
                 Mov     SI, Offset Menu_Table
                 Xor     CX, CX
                 Mov     CL, [SI]                ; # Of items to move
+                Inc     CL                      ; Remember, its 0 based!
                 Add     SI, CurrentPos + 1
 
                 Mov     DI, Offset FixLasrR     ; Point to On/Off toggles
@@ -992,15 +1004,15 @@ SetMenu         Proc    Near
 SM_OnOff:
                 Movsb
                 Add     SI, SIZE SMenuTable - 1 ; Sub 1 for auto-increment
-                Loop    SM_OnOff
+                Loop    SM_OnOff                ; Move menu data into toggles
 
                 Xor     BX, BX
 
-                Mov     SI, Offset Charge_Tabl
-                Mov     BL, [FixShldC]
-                Add     SI, BX
-                Mov     AL, [SI]
-                Mov     [FixShldC], AL
+                Mov     SI, Offset Charge_Tabl  ; All following code takes
+                Mov     BL, [FixShldC]          ; the value in the toggle
+                Add     SI, BX                  ; cell, and replaces it with
+                Mov     AL, [SI]                ; the value found in the 
+                Mov     [FixShldC], AL          ; appropriate array.
 
                 Mov     SI, Offset Charge_Tabl
                 Mov     BL, [FixLasrC]
@@ -1027,6 +1039,13 @@ SM_OnOff:
                 Add     SI, BX
                 Mov     AX, [SI]
                 Mov     [MislDelMod], AX
+
+                Mov     SI, Offset Trak_Tabl
+                Mov     BL, [FixTrakR]
+                Shl     BX, 1
+                Add     SI, BX
+                Mov     AX, [SI]
+                Mov     [TrakRate], AX
 
                 Ret
 
@@ -1055,22 +1074,25 @@ SMenuTable  ENDS
 
 ; These are the charge boosts for all charge-based systems!!!!! (In decimal)
 ; First entry MUST be 00 or it cannot be turned off.
-Charge_Tabl db 00, 04, 08, 12, 16, 20, 24, 28, 32, 36, 40
+Charge_Tabl db 00, 04, 08, 12, 15, 20, 26, 32, 38, 44, 50
 
 ; These are the delays for the missle and laser cycle times (In decimal)
 Delay_Tabl dw 000, 220, 200, 180, 160, 140, 120, 100, 080, 060, 040
 
-; Define the menu's slider/text box locations
-Menu_Table  db 6 ; Table Length
-TABLE_START EQU $
-            SMenuTable <00, 11, 27, 10, 41, 00, 00, Offset SelMsgs>
-            SMenuTable <00, 12, 27, 10, 41, 00, 00, Offset SelMsgs>
-            SMenuTable <00, 13, 27, 10, 41, 00, 00, Offset SelMsgs>
-            SMenuTable <00, 14, 27, 10, 41, 00, 00, Offset SelMsgs>
-            SMenuTable <00, 15, 27, 10, 41, 00, 00, Offset SelMsgs>
+; Delays for the target lock for missle firing
+Trak_Tabl  dw 49Ch, 430h, 3B0h, 330h, 2B0h, 230h, 1B0h, 150h, 100h, 080h, 030h
 
-            SMenuTable <00, 18, 0FFh, 01, 41, 00, 00, Offset OnOffMsgs>
-            SMenuTable <00, 19, 0FFh, 02, 41, 00, 00, Offset ChargeMsgs>
+; Define the menu's slider/text box locations
+Menu_Table  db 6 ; Table Length, Actual # - 1
+TABLE_START EQU $
+            SMenuTable <00, 11, 31, 10, 45, 00, 00, Offset SelMsgs>
+            SMenuTable <00, 12, 31, 10, 45, 00, 00, Offset SelMsgs>
+            SMenuTable <00, 13, 31, 10, 45, 00, 00, Offset SelMsgs>
+            SMenuTable <00, 14, 31, 10, 45, 00, 00, Offset SelMsgs>
+            SMenuTable <00, 15, 31, 10, 45, 00, 00, Offset SelMsgs>
+            SMenuTable <00, 16, 31, 10, 45, 00, 00, Offset SelMsgs>
+
+            SMenuTable <00, 19, 0FFh, 01, 41, 00, 00, Offset OnOffMsgs>
 TABLE_END   EQU $
 
 Pallet1     db 15, 10, 60
@@ -1110,13 +1132,8 @@ SelMsgs     db 20 ; Size of Message
             db 'Instantaneous      ',00
 
 OnOffMsgs   db 6
-            db 01,11,'OFF',00
-            db 01,15,'ON ',00
-
-ChargeMsgs  db 23
-            db 'Absolute              ',00 
-            db 'Relative              ',00
-            db 'Relative w/o Discharge',00
+            db 01,15,'OFF',00
+            db 01,11,'ON ',00
 
 Intro_Msg   db 01,02,'Generic Loader Shell v2.00 (c) 1990-1994 Gen. Half-Track, Ltd.',13
             db 01,03,'Patch v',PATCH_REV,', compiled ',??time,' on ',??date,' patching file ',BOOT_ME,CR
@@ -1125,24 +1142,24 @@ Intro_Msg   db 01,02,'Generic Loader Shell v2.00 (c) 1990-1994 Gen. Half-Track, 
             
 Patch_Me    EQU $ + 35
 Intr_Msg    db 01,15,'>>Using user interrupt vector 0x6?<<',CR
-Ver_Msg     db 01,15,'** DO NOT DISTRIBUTE ** (Still in BETA, remember?)',CRE
+Ver_Msg     db 01,15,'Auto-Detect TIE Fighter Version: ** N/A **',CRE
 
 IntF_Msg    db 'Unable to find free user interrupt vector (0x60-0x69)  Aborting...',CRE
 
 Menu_Msg    db CR,01,01,'TIE Fighter Fire Control System - (c) 1994 GHT Labs, Ltd.',CR,CR
             db 01,10,'SLIDER Controls:',CR
-            db       '    Laser  Firing   Rate :',CR
-            db 01,11,'    Missle Firing   Rate :',CR
-            db       '    Shield Recharge Rate :',CR
-            db 01,12,'    Laser  Recharge Rate :',CR
-            db       '    Beam   Recharge Rate :',CR,CR
-            db 01,13,'TOGGLES:',CR
-            db       '    Unlimited ammo                     :',CR
-            db 01,14,'    System charging method             :',CR
+            db       '    Laser  Firing   Rate     :',CR
+            db 01,11,'    Missle Firing   Rate     :',CR
+            db       '    Shield Recharge Rate     :',CR
+            db 01,12,'    Laser  Recharge Rate     :',CR
+            db       '    Beam   Recharge Rate     :',CR
+            db 01,13,'    Half-Trak(tm) Target Lock:',CR,CR
+            db       'TOGGLES:',CR
+            db 01,14,'    Unlimited ammo                     :',CR
             db CR, 24,' ',25,' Select Item   ',27,' ',26,' Adjusts   '
             db '<RETURN> starts   <ESC> quits',CRE
 
-Start_Msg   db 'Running TIE FIGHTER...',CRE
+Start_Msg   db 01,05,'Running TIE FIGHTER...',CRE
 
 Cursor      db TIE_FITR,00 
 Blank       db '   ',00

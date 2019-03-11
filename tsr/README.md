@@ -31,3 +31,16 @@ Clearly naming consistency wasn't my strong suit. I think this is an older TSR t
 ### Modem War
 
 This was doc check protected but also had a checksum that notified the players if someone was using a modified binary. Hilariously if you patch out the protection with a sector editor the game still plays despite notifying your opponent that you're a cheater. Not even sure if the first version even worked but I remember an earlier version patched too early and tripped the checksum. In looking at the different versions it looks like I rewrote this one to be a wrapper instead of a TSR that remained loaded even after exiting the game. The last version shouldn't trip the checksum either as it patches after the check. I played this a lot.
+
+## ATLANTIS.ASM
+
+### Indiana Jones and the Fate of Atlantis
+
+Oh man this was hard. I may have been a touch arrogant back then (big fish, small pond, maybe one other person in the area cracked games). This was a lesson in humility. I did my usual stepping and patching on the doc check and called it a day. But as I was playing the game I got stuck on a section that I know should have worked. Hmmmm. Sure enough, restart the game without the patch and pass the protection check legitimately and I got past that area. After more poking around is when I realized they created the copy protection in their interpreter. Stomach sinks. Pupils dialate. Do I have to reverse engineer their bytecode to crack this?
+
+This was a marathon week where I spent close to 80 hours on this one title. So many failed attempts, and such a blatant disregard for personal hygiene. Inspiration struck on maybe the 5th day. If I passed the protection and restarted the game, it didn't re-run the doc check. So that means there must be a flag somewhere that is set once the protection check is passed.
+
+The strategy I used was to get up to the protection screen, then save off the entire data segment using the debugger (all 64KB of it). Wait a few seconds, then do it again. Pass the protection check, then do it one more time. I wrote a throwaway program that looked for any bytes that remained consistent between captures 1 and 2, but changed in capture 3. This reduced the number of bytes I had to check to maybe 11 or so? Then it was just a matter of manually flipping each of those bytes after initialization but before the protection screen using a debugger. It only took maybe 3 tries before I found the right one. 
+
+The same technique worked equally well on all the other SCUMM VM games I got my hands on at the time.
+

@@ -52,7 +52,9 @@ The same technique worked equally well on all the other SCUMM VM games I got my 
 
 The "motivation" from QUARTZ mentioned in the splash screen was a nonstop tirade of beratement that was probably a violation of the 8th Amendment to the US Constitution. It was a public shaming that clawed deep into the psyche, tormented the ego and delighted in skilled manipulation of a fragile self-esteem. The General had met his Waterloo. All past accomplishments were for naught. Put down that keyboard crawl back in your hole. Then when I finally figured it out all I got was a "kewl" on a BBS post and life moved on. You're only as good as your last crack.
 
+## MONKEY2.ASM
 
+### The Secret of Monkey Island II
 
-
+Again, 10 minutes once I figured out the first one.
 

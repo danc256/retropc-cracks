@@ -85,7 +85,7 @@ ENDM
                 K_ESC      EQU 011Bh       ; Escape Key keyboard code
                 K_CR       EQU 1C0Dh       ; Return Key keyboard code
                 
-                PATCH_REV  EQU '1.00'      ; Version for patch
+                PATCH_REV  EQU '1.10 Beta' ; Version for patch
                 BOOT_ME    EQU 'TIE.EXE'   ; Startup file patch runs
                 
                 TIE_FITR   EQU 195,'0',180 ; ANSI Tie-Fighter (cursor)
@@ -108,6 +108,7 @@ Start:
                 ; The lower the # the faster
                 MislDelMod dw 0050h     ; Becomes Missle Delay   
                 LasrDelMod dw 0040h     ; Becomes Laser Delay    
+                TrakRate   dw 049Ch     ; Actual value for target lock rate
                 
                 ; The higher the # the faster
                 FixLasrR   db 00        ; Fix Laser Firing Rate
@@ -117,8 +118,12 @@ Start:
                 FixBeamC   db 00        ; Fix Beam Charging Rate
                 FixTrakR   db 00        ; Target Lock rate 
                 FixUnlmA   db 00        ; Unlimited Ammo
+                FixWeapS   db 00        ; Interactive weapons toggle active
 
-                TrakRate   dw 049Ch     ; Actual value for target lock rate
+                PtchActive db 00        ; 1=In flight, 0=Anywhere else
+
+                AmmoPos    db 00        ; Position in Ammo Table
+                AmmoTable  db 08Fh, 090h, 094h, 095h, 096h, 097h, 098h
                 
                 BootFile   db BOOT_ME,00h ; Name of startup file
 
@@ -145,24 +150,93 @@ Start:
 PHead %IVect_1
                 Cmp     AH, 3Fh                 ; Reading a file?
                 Je      P1_DontSkip             ; No, ignore this call
-                Jmp     P1_Skip
-P1_DontSkip:
+                Jmp     P1_SkipPatch            
 
+P1_DontSkip:
                 Cmp     CX, 0F800h              ; 2nd part of FLIGHT.OVL?
                 Je      P1_ContNoSkip1          ; Uh-uh.  Skip it.
-                Jmp     P1_Skip
+                Jmp     P1_MagicOff1            ; Might be exiting flight sim
+
+
+; ****** Check for ENTERING flight sim section
+
 P1_ContNoSkip1:
 
                 Pushf                           ; Do Call, check for signature
                 MCall   %IVect_1                
 
-                Cmp     Word Ptr DS:[0000h], 5E89h      ; Magic #'s 
-                Jne     P1_Skip                         ; (Just to make sure)
+                Cmp     Word Ptr DS:[0000h], 5E89h      ; Magic #'s for
+                Je      P1_IsMagic1                     ; STARTING flight sim
+                Iret
+P1_IsMagic1:
 
-                Cmp     Word Ptr DS:[0002h], 38B4h
-                Jne     P1_Skip
+                Cmp     Word Ptr DS:[0002h], 38B4h      ; Other part
+                Je      P1_IsMagic2
+                Iret
+
+
+; ****** Check for LEAVING flight sim section
+
+P1_MagicOff1:
+                Cmp     CX, 0F840h              ; Is it the length of the 
+                Je      P1_MagicOffTest         ; END of the sim overlay?
+                Jmp     P1_SkipPatch            ; No, skip it
+
+P1_MagicOffTest:
+                
+                Pushf                           ; Do Call, check for signature
+                MCall   %IVect_1                
+
+                Push    BX
+                Mov     BX, DX
+                Add     BX, 60h
+                Cmp     Word Ptr DS:[BX], 09A11h
+                Pop     BX
+                Je      P1_MagicOff1OK
+                Iret
+
+P1_MagicOff1OK:
+                Push    BX
+                Mov     BX, DX
+                Add     BX, 62h
+                Cmp     Word Ptr DS:[BX], 007AEh
+                Pop     BX
+                Je      P1_MagicOff2OK
+                Iret
+
+P1_MagicOff2OK:
+                Mov     CS:[PtchActive], 00             ; Turn OFF patch
+
+                Push    AX
+                Push    DS
+
+                Mov     AX, 40h
+                Mov     DS, AX
+                Mov     AL, Byte Ptr DS:[0017h]
+                And     AL, Not 16
+                Mov     Byte Ptr DS:[0017h], AL
+
+                Pop     DS
+                Pop     AX
+
+                Iret
 
 ; ************* OK! START PATCHING!
+
+P1_IsMagic2:
+                Mov     CS:[PtchActive], 01             ; Turn ON patch
+
+                Push    AX
+                Push    DS
+
+                Mov     AX, 40h
+                Mov     DS, AX
+                Mov     AL, Byte Ptr DS:[0017h]
+                Or      AL, 16
+                Mov     Byte Ptr DS:[0017h], AL
+
+                Pop     DS
+                Pop     AX
 
                 Push    AX
                 Mov     AX, CS:[UserInt1]               ; Build INT 6x code
@@ -208,16 +282,77 @@ P1_SkipShldC:
                 Mov     Word Ptr DS:[805Ah], AX         ; Beam recharge fix
 
 P1_SkipBeamC:
-                Cmp     CS:[FixTrakR], 00
-                Je      P1_SkipTrakR
+                Cmp     CS:[FixTrakR], 00               
+                Je      P1_SkipTrakR                    
                 
                 Mov     AX, Word Ptr CS:[TrakRate]
                 Mov     Word Ptr DS:[7CFBh], AX         ; Target locking rate
+P1_SkipTrakR:                                           ; AX is wiped out!!!
 
-P1_SkipTrakR:
                 Pop     AX
                 Iret
 
+P1_SkipPatch:                                           
+                Cmp     AH, 08h                         ; Weapons cheat...
+                Jne     P1_Skip
+
+                Cmp     CS:[PtchActive], 01             ; Go only when in 
+                Jne     P1_Skip                         ; flight.
+
+                Cmp     CS:[FixWeapS], 01               ; Go only when selected 
+                Jne     P1_Skip                         
+
+                Pushf                                   ; Read keypress
+                MCall   %IVect_1                
+
+                Cmp     AL, 17h                         ; Is it a CTRL+W?
+                Je      P1_WeapFixPatch                 ; Yeah...
+                Iret                                    ; Nah, screw it...
+
+P1_WeapFixPatch:
+                Push    BX
+
+                Mov     BX, Word Ptr DS:[0C8B4h]        ; Load BX w/Player Seg
+                Cmp     Word Ptr DS:[BX+0E0h], 00       ; Are missles present?
+                Je      P1_CleanSkip                    ; No, clean up & go
+
+                Cmp     Byte Ptr DS:[BX+0D0h], 01       ; Lasers only?
+                Jne     P1_Ions
+
+                Mov     Word Ptr DS:[0C8CDh], 0000      ; Select Lasers...
+                Jmp     P1_DoneFix
+
+P1_Ions:
+                Mov     Word Ptr DS:[0C8CDh], 0001      ; Select Ions...
+
+P1_DoneFix:
+                Push    BX
+                
+                Mov     BL, CS:[AmmoPos]
+                Cmp     BL, 06
+                Jb      P1_NotZeroYet
+
+                Xor     BL, BL
+                Jmp     P1_ZeroBL
+
+P1_NotZeroYet:
+                Inc     BL
+
+P1_ZeroBL:
+                Mov     CS:[AmmoPos], BL
+                Xor     BH, BH
+
+                Mov     AL, CS:[BX+Offset AmmoTable]
+
+                Pop     BX
+
+                Mov     Byte Ptr DS:[BX+0E1h], AL
+                Mov     AX, 0877h
+
+P1_CleanSkip:                
+                Pop     BX
+                Iret
+                
 P1_Skip:
                 MJump %IVect_1
 PTail %IVect_1
@@ -1083,7 +1218,7 @@ Delay_Tabl dw 000, 220, 200, 180, 160, 140, 120, 100, 080, 060, 040
 Trak_Tabl  dw 49Ch, 430h, 3B0h, 330h, 2B0h, 230h, 1B0h, 150h, 100h, 080h, 030h
 
 ; Define the menu's slider/text box locations
-Menu_Table  db 6 ; Table Length, Actual # - 1
+Menu_Table  db 7 ; Table Length, Actual # - 1
 TABLE_START EQU $
             SMenuTable <00, 11, 31, 10, 45, 00, 00, Offset SelMsgs>
             SMenuTable <00, 12, 31, 10, 45, 00, 00, Offset SelMsgs>
@@ -1093,6 +1228,7 @@ TABLE_START EQU $
             SMenuTable <00, 16, 31, 10, 45, 00, 00, Offset SelMsgs>
 
             SMenuTable <00, 19, 0FFh, 01, 41, 00, 00, Offset OnOffMsgs>
+            SMenuTable <00, 20, 0FFh, 01, 41, 00, 00, Offset OnOffMsgs>
 TABLE_END   EQU $
 
 Pallet1     db 15, 10, 60
@@ -1147,15 +1283,19 @@ Ver_Msg     db 01,15,'Auto-Detect TIE Fighter Version: ** N/A **',CRE
 IntF_Msg    db 'Unable to find free user interrupt vector (0x60-0x69)  Aborting...',CRE
 
 Menu_Msg    db CR,01,01,'TIE Fighter Fire Control System - (c) 1994 GHT Labs, Ltd.',CR,CR
+            
             db 01,10,'SLIDER Controls:',CR
             db       '    Laser  Firing   Rate     :',CR
-            db 01,11,'    Missle Firing   Rate     :',CR
-            db       '    Shield Recharge Rate     :',CR
-            db 01,12,'    Laser  Recharge Rate     :',CR
+            db       '    Missle Firing   Rate     :',CR
+            db 01,11,'    Shield Recharge Rate     :',CR
+            db       '    Laser  Recharge Rate     :',CR
             db       '    Beam   Recharge Rate     :',CR
-            db 01,13,'    Half-Trak(tm) Target Lock:',CR,CR
+            db 01,12,'    Half-Trak(tm) Target Lock:',CR,CR
+            
             db       'TOGGLES:',CR
-            db 01,14,'    Unlimited ammo                     :',CR
+            db       '    Unlimited ammo                     :',CR
+            db 01,13,'    Dynamic Ammo Cycler [Ctrl+W]       :',CR
+
             db CR, 24,' ',25,' Select Item   ',27,' ',26,' Adjusts   '
             db '<RETURN> starts   <ESC> quits',CRE
 

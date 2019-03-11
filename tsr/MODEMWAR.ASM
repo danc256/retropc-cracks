@@ -1,252 +1,299 @@
-code           segment
-               assume cs:code
-               org 100h
+; Generic Spawner shell, v1.50, (C) 1990-1993 GHT, Ltd.  All Rights Reserved
+
+; General purpose shell for writting .COM files that modify the IBM
+; environment then execute another program under that environment.  
+; Removes all modifications (Patches + Memory allocated) upon termination of
+; spawned program automatically.  Useful for games cheats and such.
+
+; So long as my name is still DISPLAYED upon execution, in a similar manner
+; as the author of modifications to this program, it may be modified freely.
+; Oh yeah, this is FREEWARE.  See DOCS at end of file.
+
+; Compiled with Turbo Assembler v3.00, (c) Borland International 
+; (Source compatible with most other popular assemblers I.E. MASM)
+
+; *** MACROS ***
+
+SetIntVec MACRO Vector
+                Push    ES                    ;; Keep old ES (Gotta keep SEGs)
+
+                Mov     AX, 3500h + &Vector   ;; Get old location 
+                Int     21h
+
+                Push    ES                    ;; Store it on the stack
+                Mov     Word Ptr DS:[Old_Int&Vector], BX
+                Pop     BX
+                Mov     Word Ptr DS:[Old_Int&Vector+2], BX
+
+                Mov     AX, 2500h + &Vector
+                Mov     DX, Offset Handler_&Vector ;; Install new vector
+                Int     21h
+
+                Pop     ES                       ;; Restore old ES
+ENDM
+
+RestIntVec MACRO Vector
+                Push    DS
 
-start:
+                Mov     AX, Word Ptr DS:[Old_Int&Vector+2]  
+                Push    AX                              
+                Mov     DX, Word Ptr DS:[Old_Int&Vector]
+                Pop     DS
+                Mov     AX, 2500h + &Vector
+                Int     21h
 
-               jmp loader                       ;Go to program start!
+                Pop     DS
+ENDM
 
-               ;This is the DATA portion for the actual TSR that
-               ;MUST remain resident...
+PHead MACRO ProcLabel
+  Handler_&ProcLabel  Proc    Near            
+  Assume  CS: Code_Seg, DS: Code_Seg
+ENDM
 
-               serial        dw  0001h          ;Serial  # for PATCH
-               version       dw  0110h          ;Version # for PATCH
-               loader_ver    dw  0150h          ;Version # for SHELL
+PTail MACRO ProcLabel
+  Handler_&ProcLabel Endp
+ENDM
 
-               ;WARNING-> NEVER EVER change anything ABOVE THIS LINE!!!!!!
-               ;OR the program will be SPAM!
-               ;(You CAN change the actual values, just not location...)
+Old MACRO Vector
+  Old_Int&Vector dd 0000h
+ENDM
 
-               intvec_1    equ    19h           ;INT to be patched
-              ;intvec_x    equ    xxh           ;ADDITIONAL INT(s)
+MJump MACRO Vector
+  Jmp CS:Old_Int&Vector
+ENDM
 
-               old_vector_1  dd  0,0            ;Storage for old INT
-              ;old_vector_x  dd  0,0            ;Storage for old INT xx
+MCall MACRO Vector
+  Call CS:Old_Int&Vector
+ENDM
 
+                CR         EQU 13, 10      ; Carriage Return, Line Feed
+                CRE        EQU 13, 10, '$' ; CR, LF + EOLN Symbol ('$')
+                
+                PATCH_REV  EQU '1.00'      ; Version for patch
+                BOOT_ME    EQU 'WAR.EXE'  ; Startup file patch runs
 
-patch_1        proc near                        ;Patch_x for INT xx
-               assume cs:code
 
-               push   bp              ;Save registers...
-               push   es
-               push   bx
+                IVect_1    EQU 21h         ; Vector's interrupt #
+                IVect_2    EQU 69h
 
-               mov    bp,sp
-               mov    es,ss:[bp+08]     ;Calculate seg:offset of INT call
+Code_Seg        Segment
+                Assume CS: Code_Seg, DS: Code_Seg
 
-               mov    bx,ss:[bp+06]
-               dec    bx
-               dec    bx
+StartOfCode     EQU     $
+                Org     100h
+Start:
+                Jmp        Loader       ; Go to start of program
+                
+                BootFile   db BOOT_ME,00h ; Name of startup file
 
-               mov    es:[bx],1275h     ;Cover it up
+                Env_Ptr    dw 0000      ; Table needed to spawn child
+                Param_Pl   dw 0080h     ; process (Contains pointer to
+                Param_Ph   dw 0000h     ; parent's environment, pointer
+                Fcb_1l     dw 005Ch     ; to command line parameter list,
+                Fcb_1h     dw 0000h     ; and pointers to File Control
+                Fcb_2l     dw 006Ch     ; blocks #1 & #2...
+                Fcb_2h     dw 0000h
 
-               mov    bx,ss:[bp+06]     ;Move the IP so that on return,
-               add    bx,22h            ;it skips over the check!
-               mov    ss:[bp+06],bx
+                Old_SP     dw 0000h     ; Holds old Stack Pointer
+                Ret_Addr   dw 0000h     ; Holds return address from Spawn
+                
+                Done_1     db 00h       ; Semaphore when patch is done
 
-               pop    bx                ;Restore registers
-               pop    es
-               pop    bp
+                Old %IVect_1
+                Old %IVect_2
+                
+PHead %IVect_1
+                Cmp     CS:[Done_1], 00
+                Jne     P1_Skip
 
-               iret
+                Cmp     AH, 2Ch
+                Jne     P1_Skip
 
-patch_1        endp
+                Inc     CS:[Done_1]
+                Mov     Word Ptr ES:[0076h], 69CDh  ; Install interrupt 
 
-end_resident:
+P1_Skip:
+                MJump %IVect_1
+PTail %IVect_1
 
-mess           proc near                ; AFFECTS FLAGS
-                                        ; Outputs a string
-                                        ; procedure print(var s:string);
-               mov  ah,09h
-               int  21h
-               ret
+PHead %IVect_2
+                Push    BP
+                Mov     BP, SP
 
-mess           endp
+                Push    AX
+                Push    DS
 
+                Mov     AX, [BP+04]
+                Mov     DS, AX
+                Mov     Word Ptr DS:[0076h], 0E1A0h; Clean up after ourselves
 
-verify_serial  proc near                ; AFFECTS FLAGS
+                Pop     DS
 
-               push ax
-               mov  ax,es
-               inc  ax
-               mov  es,ax               ;INC ES (point to PSP instead of MCB)
-               mov  cx,03h              ; 3 words...
+                Mov     AL, Byte Ptr DS:[76C4h]    ; Store values being
+                Mov     Byte Ptr DS:[14E1h], AL    ; sought after in registers
 
-               mov  di,103h             ; Both strings start at 103
-                                        ; in their respective segments...
-               mov  si,di
-               repe cmpsw               ; Compare the Serial #'s
-               je   pass_cmpsw
-               dec  ax                  ; Flags & CX will be set...
-               mov  es,ax               ; restore ES
+                Mov     AL, Byte Ptr DS:[76C5h]
+                Mov     Byte Ptr DS:[14E2h], AL
 
-pass_cmpsw:
-               pop  ax
-               ret
+                Mov     AL, Byte Ptr DS:[76C6h]
+                Mov     Byte Ptr DS:[14E3h], AL
 
-verify_serial  endp
+                Pop     AX
 
+                Mov     Word Ptr [BP+02], 00A1h ; Set Return value somewhat
+                                                ; off in the distance
 
+                Mov     SP, BP
+                Pop     BP
+                IRet
+PTail %IVect_2
 
-MCB_walker     proc near
 
-               mov ah, 52h                     ; Get List of Lists (DOS)
-               int 21h
-               mov ax, es:[bx-2]               ; First MCB address (segment)
-               mov es, ax                      ; Toss segment back in ES
+ISR_Install     Proc    Near
+                Assume  CS: Code_Seg, DS: Code_Seg
 
-               jmp walk_loop                   ; That we'll use for ID
+                SetIntVec %IVect_1
+                SetIntVec %IVect_2
 
-next_bloc:
+                Ret
+ISR_Install     Endp
 
-               mov ax, es                      ; Calculate next block in chain
-               mov bx, word ptr es:[3]
-               inc bx                       ; Compensate for MCB size itself!
-               add ax, bx
-               mov es, ax
 
-walk_loop:
+ISR_Remove      Proc    Near
+                Assume  CS: Code_Seg, DS: Code_Seg
 
-               mov ah,es:[0]               ; MCB chain (M = Link, Z = end)
-               cmp word ptr es:[5],0ffffh  ; Found our TSR ID byte?
-               jne  n_found_ID
-               call verify_serial          ; Was the serial# correct?
-               jnz   n_found_ID
-               ret                         ; Its in there! (ragu)
-n_found_ID:
+                RestIntVec %IVect_1
+                RestIntVec %IVect_2
 
-               cmp ah,'M'                  ; No ID found, more blocks though?
-               je  next_bloc               ; Yes, keep a chuggin'
-               cmp ah,'Z'                  ; Are we at the end of the chain?
-               jne no_ID                   ; Yes, ID NOT FOUND (install TSR)
-               ret
+                Ret
+ISR_Remove      Endp
 
-no_ID:
-                                           ; Corrupted MCB chain [FATAL ERROR]
-               mov dx, offset fatal_mess   ; If it got past previous checks!
-               call mess                   ; Print Fatal error message
 
-terminate:
+Setup_Param     Proc    Near
+                Assume  CS: Code_Seg, DS: Code_Seg
 
-               mov ax,4c00h
-               int 21h
+                Push    AX
+                Push    CS
+                Pop     AX      
+                
+                Mov     Param_Ph, AX    ; Set SEGMENT portion of FAR
+                Mov     Fcb_1h,   AX    ; Pointers to Params, & FCB's
+                Mov     Fcb_2h,   AX
 
-MCB_walker endp
+                Pop     AX
 
+                Ret
+Setup_Param     Endp
 
-set_vec          proc near
 
-                 assume cs:code,ds:code
+Spawn           Proc    Near
+                Assume  CS: Code_Seg, DS: Code_Seg
+                
+                Pop     Ret_Addr
 
-                 mov    ax,3500h+intvec_1               ;vector swap-age
-                 int    21h
-                 mov    word ptr [old_vector_1+2],es
-                 mov    word ptr [old_vector_1],bx
+                Mov     AH,  4Ah  ; Re-size memory to bare minimum
+                Mov     BX,  (Offset EndOfCode - StartOfCode + 15) shr 4
+                Int     21h
 
-                 mov    ax,2500h+intvec_1
-                 mov    dx,offset patch_1
-                 push   cs
-                 pop    ds
-                 int    21h
+                Mov     AX, 4B00h       ; Prepare to execute LOAD.EXE
+                Mov     BX, Offset Env_Ptr
+                Mov     DX, Offset BootFile
+                Mov     Old_SP, SP                
+                Int     21h
 
-                 
-set_vec    endp
+                Mov     CX, CS          ; Restore all registers... (EXE
+                Mov     DS, CX          ; trashes ALL but CS:IP registers
+                Mov     SS, CX          
+                Mov     SP, Old_SP
+                Mov     ES, CX
+                Jc      S_Error
 
-set_ID           proc near
+S_OK:
+                Xor     AX, AX          ; Set Function PASSED
 
-                 mov  ax,cs             ;Put CS in ax (duh...)
-                 dec  ax                ;Dec 1 (location of MCB)
-                 mov  es,ax             ;put that to ES so that we can->
-                 mov  es:[5],0ffffh     ;put ID marker in unused word in MCB
-                 ret
+S_Error:
+                Push    Ret_Addr
+                Ret
+Spawn           Endp
 
-set_ID           endp
 
-chain_check      proc near
+Main            Proc    Near
+                Assume  CS: Code_Seg, DS: Code_Seg
+Loader:              
+                Mov     DX, Offset Intro_Msg    ; Intro Message
+                Mov     AH, 09h
+                Int     21h
 
-                 or   dx,0FFFFh                  ; DX is pass/fail flag
-                 push es                         ; Save TSR ES
+                Xor     AH, AH                
+                Int     16h
 
-                 mov  ax,3500h+intvec_1          ; Get vector
-                 int  21h
-                 mov  ax, es
-                 pop  es
-                 mov  bx, es
-                 cmp  ax, bx                     ; Does VECTOR match SEG?
-                 jne  fail_chain                 ; NO!  Chained over!!!
-                 xor  dx, dx                     ; Yes, go ahead and remove
-fail_chain:
-                 ret
+                Cmp     AL, 1Bh
+                Je      M_Bye
 
-chain_check      endp
+                Mov     SP, Offset StackStart
 
-trash_tsr        proc near
+                Call    ISR_Install              
+                Call    Setup_Param
+                Call    Spawn                
+                
+                Or      AX, AX
+                Jnz     M_CheckSpawnError
 
-                 mov  dx,offset s_r_msg
-                 call mess
-                 jmp  terminate
+                Mov     DX, Offset Bye_Msg
+                Jmp     Terminate
 
-trash_tsr        endp
+M_CheckSpawnError:
 
+                Cmp     AX, 0002
+                Jne     M_SpawnError
 
-loader           proc near
+                Mov     DX, Offset NoBoot_Msg
+                Jmp     Terminate
 
-                 call   MCB_walker      ;is the TSR loaded already?
-                 and    cx, cx
-                 jnz    install         ;Nope, menu display...
-                 jmp    remove          ;Its there already!  (kill)
+M_SpawnError:
+                Mov     DX, Offset Error_Msg
 
-install:
-                 call   set_ID                  ;Make fix to MCB for ID
-                                                ;4 now, generic text screen
-                 mov    dx,offset copy_right    ;Fix this last to look kewl
-                 call   mess                    ;Display message (cheap-o)
+Terminate:              
+                Mov     AH, 09h
+                Int     21h
+                Call    ISR_Remove
 
-                 call   set_vec                 ;Set up interrupt ptrs...
-                 
-                 tsr_size  equ   ((end_resident-start)/16)+17 ;inefficient
+M_Bye:
+                Mov     AH, 4Ch
+                Int     21h
 
-                 mov    ax,31ffh                ;TSR and take off...
-                 mov    dx,tsr_size
-                 int    21h
+Main            Endp
 
-                 mov    dx, offset u_error      ;unexpected error!
-                 jmp    fatal_error
+; All error/status message text bodies...
+Error_Msg   db 'Sorry, an error has occured! <Aborting>',CRE
+NoBoot_Msg  db 'Couldn''t find the startup file!',CRE
+Bye_Msg     db 'Thank you for not illegally using this program! --GHT',CRE
 
-remove:
-                 
-                 mov    dx,offset i_msg
-                 call   mess
-                 call   chain_check
-                 and    dx, dx
-                 jne    fail_remove
-                 jmp    trash_tsr
-fail_remove:
-                 mov    dx,offset f_r_msg
+MyStack     db 6 dup('Stack ')
+StackStart  EQU $-2
 
-fatal_error:
-                 call   mess
-                 jmp    terminate
+EndOfCode       EQU $
 
-loader           endp
+Intro_Msg   db 'Generic TSR Shell v1.50 (c) 1990-1994 Gen. Half-Track, Ltd.',CR
+            db 'Patch v',PATCH_REV,', compiled 21:53:02 on 01/14/1999 patching file ',BOOT_ME,CR
+;            db 'Patch v',PATCH_REV,', compiled ',??time,' on ',??date,' patching file ',BOOT_ME,CR
+            db 'This patch is NOT to be used in a manner that would violate the rights of',CR
+            db 'the owner of any commercial software!  This patch is PD, distributed AS IS',CR
+            db 'Patch for Modem War (Yeah, the game from ''88... Decided to play it',CR
+            db 'again... you gotta problem with that? --GHT)',CR
+            db '<<<PRESS ANY KEY TO CONTINUE>>> - Or press ESC to Quit',CRE
 
-   ; ALL error messages FIRST & THEN the funky-text...
+Code_Seg        Ends
+End             Start
 
-   ; Error messages and stuff...(FOR MCB_WALKER)
 
-   fatal_mess db 'BREAK IN MCB CHAIN - SYSTEM WILL CRASH!',10,13,'$'
-
-   f_r_msg      db  'UNSUCCESSFUL!  (TSR has been chained over!)',10,13,'$'
-   s_r_msg      db  'SUCCESSFUL! (TSR has been totally removed!)',10,13,'$'
-   i_msg        db  'This patch has already been installed!',10,13
-   i_msg_2      db  'Removal has been $'
-   u_error      db  'UNEXPECTED ERROR!  (Something is REALLY spammed!)',10,13
-   xu1          db  '$'
-
-   copy_right   db  'Generic TSR-Shell v1.50 (c) 1991 GHT - '
-   xcr2         db  'PATCH for MODEM WARZ',10,13
-   xcr3         db  'Support BBS: Atlantis (717) 825-5766',10,13,'$'
-
-
-code           ends
-end            start
+; Stuff:
+; To ADD a new interrupt handler, you must declare the following:
+;
+; 1) A new IVECT_? label (IE IVect_2 EQU 13h)
+; 2) Storage for the OLD vector (IE Old %IVect_2)
+; 3) A HANDLER for the new routine (IE PHead %IVect_2 <CODE> PTail %IVect_2)
+; 4) An INSTALL routine (IE SetIntVect %IVect_2)
+; 5) A REMOVE routine (IE RestIntVect  %IVect_2)
+; 6) Code the area between PHEAD and PTAIL with the actual code.  You have
+; Macros MJUMP and MCALL to assist in chaining your new handler.  

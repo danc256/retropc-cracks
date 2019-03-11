@@ -58,3 +58,8 @@ The "motivation" from QUARTZ mentioned in the splash screen was a nonstop tirade
 
 Again, 10 minutes once I figured out the first one.
 
+## IMMORTAL.ASM
+
+### The Immortal
+
+Another game I loved. Great mood, great music, and it always hung in the same spot on my PC (even without the crack). I really should try this again someday. Would like to see the ending.

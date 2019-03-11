@@ -1,3 +1,13 @@
+; Crack for THE IMMORTAL - By Gen. Half-Track
+; V 1.07 of Patch (Modified for Stack handlin')
+; V 1.05 of Spawn-Shell System (See 4-D Boxing for v1.22)
+; Modified 12/06/91  -  12:18 am (When else?)
+
+; Compile options - .COM file MUST be generated...
+; TASM IMMORTAL
+; TLINK IMMORTAL /t
+; That'll do...
+
 Code_Seg        Segment
                 Assume CS: Code_Seg, DS: Code_Seg
                 
@@ -21,29 +31,6 @@ Start:
                 OLD_SP    dw ?  ; Store old Stack Ptr for recovery from 4Bh
                 OLD_INT16 dd ?  ; Store old KeyBoard Handler
                 TRIES     db 00 ; # of protection questions defeated so far
-                WERMZER   db 00 ; 0 Means PASS, 1 Means FAIL for ISR_INSTALL
-
-CheckLock       Proc    Near
-                Assume  CS: Code_Seg, DS: Code_Seg
-
-                Push    ES
-
-                Mov     AX, 0040H
-                Mov     ES, AX
-
-                Mov     AL, ES:[0017h]
-                And     AL, 50h
-
-                Cmp     AL, 50h
-                Je      CL_Seth
-
-                Mov     WERMZER, 01h
-
-CL_Seth:
-                Pop     ES
-                Ret
-
-CheckLock       Endp
 
 PATCH           Proc    Near
                 Assume CS: Code_Seg, DS: Code_Seg
@@ -126,8 +113,6 @@ Loader:
                 CMP     AL, 1Bh         ; ESC?
                 JE      ESC_KEY         ; Yep, Quit...
 
-                Call    CheckLock
-
                 MOV     SP, Offset StartOfStack ; MUST have own stack, because 
                                                 ; it gets OVERWRITTEN!
 
@@ -137,12 +122,8 @@ Loader:
                 INT     21h     ; Has room 2 load!
                 JC      ERROR   ; Oops, oh well....
 
-                Cmp     WERMZER, 00h
-                Jne     M_SkipInst
-
                 CALL    SET_ISR ; Set up ISR (Interrupt Service Routine)
 
-M_SkipInst:
                 MOV     AX, CS:[002Ch] ; Pass SEG of Environment 2 child
                 MOV     ENV_BLOCK, AX
                 
@@ -191,13 +172,7 @@ SUCCESS:
 TERMINATE:             
                 PUSH    CS              ; Clean up shop & restore old
                 POP     DS              ; ISR routine                                
-                
-                Cmp     WERMZER, 00h
-                Jne     M_SkipISRRemove
-
                 CALL    DONE_ISR
-
-M_SkipISRRemove:
                 
 ESC_KEY:
                 MOV     AH, 4Ch         ; Quit 2 DOS (Bye!)
@@ -205,17 +180,17 @@ ESC_KEY:
 
 Main            Endp
 
-Intro_Msg   db 'THE IMMORTAL - (c) 1991 Electronic Arts',10,13
-Intro_0     db 'Cracked by Gen. Half-Track',10,13
-Intro_1     db 'Not intended for distribution with any programs',10,13
-Intro_2     db 'or for illegal distribution of THE IMMORTAL',10,13
-Intro_3     db '<<<PRESS ANY KEY TO START>>> - or ESC to ABORT',10,13,'$'
+Intro_Msg   db 'THE IMMORTAL - (c) 1991 Electronic Arts :: Cracked by Gen. Half-Track',10,13
+Intro_0     db '***Note: Patch v1.07 - Stack now protected against hangs.  (Wasn''t a problem,',10,13 
+Intro_1     db 'but just poor programming practice...)  ***NOT INTENDED for distribution with ',10,13
+Intro_2     db 'any other programs or for illegal duplication of THE IMMORTAL',10,13
+Intro_3     db '<<<PRESS ANY KEY TO START>>> - or ESC to QUIT',10,13,'$'
 Success_Msg db 10,13,'Thank you for not illegally using this patch --GHT',10,13,'$'
 Error_Msg   db 'Sorry, an error has occured...',10,13,'$'
-No_File_Msg db 'The data file IMMORTAL.EXE was not found...',10,13,'$'
+No_File_Msg db 'The startup file IMMORTAL.EXE was not found...',10,13,'$'
 
 NewStack    dw 32 Dup(00)
-StartOfStack EQU $-2
+StartOfStack  EQU $-2
 
 End_Of_File     EQU $  ; Needed in calculation for MEM re-size...
 Code_Seg        Ends

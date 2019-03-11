@@ -14,3 +14,9 @@ Budokan
 
 This took a while to figure out. My favorite tactic for doc checks was to type in a nonsense word, then search the data segment for that word, set a memory read breakpoint with SoftIce on the buffer with that word, and submit the check. From there trace it to the validation (usually just a string compare) and patch as needed. But this wasn't asking for a word, it was asking you to select an image. Whoops. This was considerably more tracing. Worth it. The game is awesome.
 
+## CRACK4DB.ASM
+
+4D-Boxing
+
+Don't really remember much about this one. The comments say v1.22 but I don't see any prior versions. This is before I started using version control. The naming convention / strategy I used for backups and such is the stuff of nightmares. 
+

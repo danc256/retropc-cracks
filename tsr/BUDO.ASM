@@ -71,7 +71,7 @@ ENDM
 
 
                 IVect_1    EQU 21h         ; Vector's interrupt #
-                IVect_2    EQU 69h
+                IVect_2    EQU 69h         ; Rude Vector (hehehehe)
 
 Code_Seg        Segment
                 Assume CS: Code_Seg, DS: Code_Seg
@@ -90,92 +90,61 @@ Start:
                 Fcb_2h     dw 0000h
 
                 Old_SP     dw 0000h     ; Holds old Stack Pointer
-                RegSpace   db 16 Dup(00)
                 
                 Old %IVect_1
                 Old %IVect_2
 
                 BootFile   db 'BUDOKAN.COM',00h ; Name of startup file
-
-SetVect         Proc    Near
-                Assume  CS: Code_Seg, DS: Code_Seg
-
-                Push    ES
-                Push    DS
-                Push    DI
-                Push    SI
-                Push    AX
-                Push    CX
-
-                Mov     AX, CS
-                Mov     ES, AX
-                Xor     AX, AX
-                Mov     DS, AX
-                Xor     SI, SI
-                Mov     DI, Offset RegSpace
-                
-                Mov     CX, 16d
-                Cld
-                Rep     Movsb
-
-                Pop     CX
-                Pop     AX
-                Pop     SI
-                Pop     DI
-                Pop     DS
-                Pop     ES
-
-                Ret
-
-SetVect         EndP
-
-ResetVect         Proc    Near
-                Assume  CS: Code_Seg, DS: Code_Seg
-
-                Push    ES
-                Push    DS
-                Push    DI
-                Push    SI
-                Push    AX
-                Push    CX
-
-                Mov     AX, CS
-                Mov     DS, AX
-                Xor     AX, AX
-                Mov     ES, AX
-                Xor     DI, DI
-                Mov     SI, Offset RegSpace
-                
-                Mov     CX, 16d
-                Cld
-                Rep     Movsb
-
-                Pop     CX
-                Pop     AX
-                Pop     SI
-                Pop     DI
-                Pop     DS
-                Pop     ES
-
-                Ret
-
-ResetVect       EndP   
-
-
+                Done_1     db 00h
 
 PHead %IVect_1
+               Cmp      CS:[Done_1], 00
+               Jne      P1_Skip
+
                Cmp      AH, 3Dh                
                Jne      P1_Skip
 
-               Call     ResetVect
-               Nop
+               Push     AX
+               Push     DS
+
+               Mov      AX, DS
+               Sub      AX, 05E8h
+               Mov      DS, AX
+
+               Mov      Word Ptr DS:[0B28h], 69CDh
+               Inc      CS:[Done_1]
+
+               Pop      DS
+               Pop      AX
 
 P1_Skip:
                MJump %IVect_1
 PTail %IVect_1
 
 PHead %IVect_2
-              Call ResetVect
+              Push      BP
+              Mov       BP, SP
+
+              Mov       Byte Ptr ES:[5C4Bh], 00h   ; Crest #0
+              Mov       Byte Ptr DS:[0008h], 80h   ; Correct response for #0
+
+              Push      AX
+              Push      BX
+              Push      DS
+
+              Sub       Word Ptr SS:[BP+02h], 02h  ; Dec Return address by 2                                
+
+              Mov       AX, SS:[BP+04h]
+              Mov       DS, AX
+              Mov       BX, SS:[BP+02h]
+              Mov       Word Ptr DS:[BX], 0E2EBh   ; Cover up... hehehehehe
+
+              Pop       DS
+              Pop       BX
+              Pop       AX
+
+              Mov       SP, BP
+              Pop       BP
 
               Iret
 PTail %IVect_2
@@ -185,7 +154,6 @@ ISR_Install     Proc    Near
 
                 SetIntVec %IVect_1
                 SetIntVec %IVect_2
-                Call    SetVect
 
                 Ret
 ISR_Install     Endp
@@ -298,8 +266,10 @@ Main            Endp
 
 Error_Msg   db 'Sorry, an error has occured... Aborting...',CRE
 NoBoot_Msg  db 'Couldn''t find the startup file!',CRE
-Intro_Msg   db 'Generic TSR Shell (c) 1990, 1992 GHT, Ltd.',CR
-            db 'Additional messages go here',CR
+Intro_Msg   db 'Generic TSR Shell (c) 1990, 1992, 1993 Gen. Half-Track, Ltd.',CR
+            db 'Patch for BUDOKAN - v1.06 -> Special Thanx 2 Software Sensei',CR
+            db 'THIS PROGRAM NOT INTENDED FOR ILLEGAL USE!  (So keep it that way, eh?) --GHT',CR
+            db 'PS - If you see any older versions of this patch anywhere, burn them...',CR
             db '<<<PRESS ANY KEY TO CONTINUE>>> - Or press ESC to Quit',CRE
 Bye_Msg     db 'Thank you for not illegally using this program! --GHT',CRE
 

@@ -26,3 +26,8 @@ Don't really remember much about this one. The comments say v1.22 but I don't se
 
 Clearly naming consistency wasn't my strong suit. I think this is an older TSR that you run it first, it sits in memory then you run the game. It's before I figured out that it's better to run the original program directly so it can unload at the end of each execution. All this does is intercept a bunch of BIOS calls and return the values the protection is looking for.
 
+## MODEMWAR.ASM
+
+### Modem War
+
+This was doc check protected but also had a checksum that notified the players if someone was using a modified binary. Hilariously if you patch out the protection with a sector editor the game still plays despite notifying your opponent that you're a cheater. Not even sure if the first version even worked but I remember an earlier version patched too early and tripped the checksum. In looking at the different versions it looks like I rewrote this one to be a wrapper instead of a TSR that remained loaded even after exiting the game. The last version shouldn't trip the checksum either as it patches after the check. I played this a lot.

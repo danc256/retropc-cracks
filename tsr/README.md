@@ -36,6 +36,12 @@ This was doc check protected but also had a checksum that notified the players i
 
 ### Indiana Jones and the Fate of Atlantis
 
+This took 10 minutes using the same approach for The Secret of Monkey Island. I just 2x checked the file timestamps and I botched the order I did them.
+
+## MONKEY1.ASM
+
+### The Secret of Monkey Island
+
 Oh man this was hard. I may have been a touch arrogant back then (big fish, small pond, maybe one other person in the area cracked games). This was a lesson in humility. I did my usual stepping and patching on the doc check and called it a day. But as I was playing the game I got stuck on a section that I know should have worked. Hmmmm. Sure enough, restart the game without the patch and pass the protection check legitimately and I got past that area. After more poking around is when I realized they created the copy protection in their interpreter. Stomach sinks. Pupils dialate. Do I have to reverse engineer their bytecode to crack this?
 
 This was a marathon week where I spent close to 80 hours on this one title. So many failed attempts, and such a blatant disregard for personal hygiene. Inspiration struck on maybe the 5th day. If I passed the protection and restarted the game, it didn't re-run the doc check. So that means there must be a flag somewhere that is set once the protection check is passed.
@@ -43,4 +49,10 @@ This was a marathon week where I spent close to 80 hours on this one title. So m
 The strategy I used was to get up to the protection screen, then save off the entire data segment using the debugger (all 64KB of it). Wait a few seconds, then do it again. Pass the protection check, then do it one more time. I wrote a throwaway program that looked for any bytes that remained consistent between captures 1 and 2, but changed in capture 3. This reduced the number of bytes I had to check to maybe 11 or so? Then it was just a matter of manually flipping each of those bytes after initialization but before the protection screen using a debugger. It only took maybe 3 tries before I found the right one. 
 
 The same technique worked equally well on all the other SCUMM VM games I got my hands on at the time.
+
+The "motivation" from QUARTZ mentioned in the splash screen was a nonstop tirade of beratement that was probably a violation of the 8th Amendment to the US Constitution. It was a public shaming that clawed deep into the psyche, tormented the ego and delighted in skilled manipulation of a fragile self-esteem. The General had met his Waterloo. All past accomplishments were for naught. Put down that keyboard crawl back in your hole. Then when I finally figured it out all I got was a "kewl" on a BBS post and life moved on. You're only as good as your last crack.
+
+
+
+
 

@@ -75,3 +75,10 @@ I have literally worn out my manual and game box I played this so much. This had
 ### Another World
 
 This isn't a crack but a fix for the keyboard beeping because the buffer was full. Maybe I was the only person who had this issue and it was specific to my PC at the time. If you play this game with a keyboard and the PC speaker isn't beeping after a few seconds, you don't need this.
+
+## ATOMINO.ASM
+
+### Atomino
+
+Bypasses the doc check. Don't remember much else special about this one.
+

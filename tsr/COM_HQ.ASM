@@ -116,7 +116,7 @@ PHead %IVect_1
                 Mov     DS, AX
 
                 Inc     CS:[Done_1]
-                Mov     Byte Ptr DS:[1106h], 0EBh
+                Mov     Byte Ptr DS:[1194h], 00h
 
                 Pop     DS
                 Pop     AX
@@ -252,7 +252,7 @@ Intro_Msg   db 'Generic TSR Shell v1.50 (c) 1990-1994 Gen. Half-Track, Ltd.',CR
             db 'Patch v',PATCH_REV,', compiled ',??time,' on ',??date,' patching file ',BOOT_ME,CR
             db 'This patch is NOT to be used in a manner that would violate the rights of',CR
             db 'the owner of any commercial software!  This patch is PD, distributed AS IS',CR
-            db 'Patch for Command HQ: Takes any password', CR
+            db 'Patch for Command HQ: Skips password routine entirely', CR
             db '<<<PRESS ANY KEY TO CONTINUE>>> - Or press ESC to Quit',CRE
 
 Code_Seg        Ends

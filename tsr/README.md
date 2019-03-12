@@ -100,7 +100,7 @@ Bypasses doc check. I don't even remember doing this one.
 
 Two patches, one for each executable. Ok apparently I wrote more than one trainer. Keys in the splash screen when patch is run.
 
-## COM-HQ.ASM
+## COM_HQ.ASM
 
 ### Command HQ
 

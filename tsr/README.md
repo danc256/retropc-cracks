@@ -94,3 +94,9 @@ Skips the disk check. Looks like there's some copypasta slop in there as it also
 
 Bypasses doc check. I don't even remember doing this one.
 
+## BCEGA.ASM and GCVGA.ASM
+
+### The Simpsons: Bart's House of Wierdness
+
+Two patches, one for each executable. Ok apparently I wrote more than one trainer. Keys in the splash screen when patch is run.
+

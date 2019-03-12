@@ -87,3 +87,10 @@ Bypasses the doc check. Don't remember much else special about this one.
 ### AutoDuel
 
 Skips the disk check. Looks like there's some copypasta slop in there as it also patches INT 21h (DOS) but doesn't appears to actually do anything with that handler.
+
+## BANDIT.ASM
+
+### Time Bandit
+
+Bypasses doc check. I don't even remember doing this one.
+

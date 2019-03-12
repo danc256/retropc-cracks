@@ -100,3 +100,8 @@ Bypasses doc check. I don't even remember doing this one.
 
 Two patches, one for each executable. Ok apparently I wrote more than one trainer. Keys in the splash screen when patch is run.
 
+## COM-HQ.ASM
+
+### Command HQ
+
+Two versions. First version takes any password. Second version has a tiny update that just skips the password screen entirely. There was actually a third version that just didn't display the patch splash screen but otherwise does nothing different. I played this a lot and I guess wanted as few keystrokes as possible between me and getting started.

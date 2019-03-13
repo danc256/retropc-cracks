@@ -124,3 +124,9 @@ Again, great naming convention. There were earlier versions of this patch that w
 
 This is another one I readlly don't remember much about. I probably enjoyed the crack more than the game.
 
+## FIRECHT.ASM
+
+### Cheat for Firehawk
+
+Simple trainer for Firehawk to replenish consumables.
+

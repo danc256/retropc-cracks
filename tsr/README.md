@@ -105,3 +105,10 @@ Two patches, one for each executable. Ok apparently I wrote more than one traine
 ### Command HQ
 
 Two versions. First version takes any password. Second version has a tiny update that just skips the password screen entirely. There was actually a third version that just didn't display the patch splash screen but otherwise does nothing different. I played this a lot and I guess wanted as few keystrokes as possible between me and getting started.
+
+## SAMPATCH.ASM
+
+### Sword of the Samurai
+
+Similar to M1 Tank Platoon. Two different handlers, one for the disk check and another for the doc check. My game manual wore out to the point where pages are falling out.
+

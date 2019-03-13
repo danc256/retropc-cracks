@@ -112,3 +112,8 @@ Two versions. First version takes any password. Second version has a tiny update
 
 Similar to M1 Tank Platoon. Two different handlers, one for the disk check and another for the doc check. My game manual wore out to the point where pages are falling out.
 
+## EOBSPWAN.ASM
+
+### Eye of the Beholder
+
+Again, great naming convention. There were earlier versions of this patch that were of the type where it just stayed in memory even after the game exits. This one starts the game and exits when it does, hence the "spawn" suffix I guess.

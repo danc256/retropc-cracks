@@ -130,3 +130,8 @@ This is another one I readlly don't remember much about. I probably enjoyed the 
 
 Simple trainer for Firehawk to replenish consumables.
 
+## GENKEY.ASM
+
+### Genghis Kahn
+
+One of the older patches that stays in memory after the game exists. 

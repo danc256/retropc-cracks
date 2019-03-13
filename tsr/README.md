@@ -147,3 +147,9 @@ Two versions of this. The first one says it's a minor fix for certain hardware p
 ### Mantis: Experimental Fighter
 
 Defeat the doc check.
+
+## GUNSHIP1.ASM
+
+### Gunship
+
+Pretty sure this is incomplete as Gunship has THREE protection checks: A keydisk check, a doc check on startup AND a doc check on landing. You have to return to base after a successful mission to get the third check, and I wasn't the greatest pilot. The only other cracker in the area figured out the 3rd check and handed it to me, but I don't think I worked it into this patch. Also interesting is this patch seems to bypass the disk and first doc check in the same handler. Usually I broke them into two separate routines but again, whatever worked was good enough back then.

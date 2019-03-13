@@ -135,3 +135,10 @@ Simple trainer for Firehawk to replenish consumables.
 ### Genghis Kahn
 
 One of the older patches that stays in memory after the game exists. 
+
+## GODSCHT.ASM
+
+### Patch / Cheat for Gods
+
+Two versions of this. The first one says it's a minor fix for certain hardware platforms (I had some flavor of an HP 386SX and there always seemed to be some flakiness about with with certain games). I have no idea what the patch did or why it was needed. The second version seems to bind some manner of cheat to the number '1' and '2' keys but there's no mention of what it does. Great job documenting this one past self.
+

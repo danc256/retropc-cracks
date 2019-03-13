@@ -117,3 +117,10 @@ Similar to M1 Tank Platoon. Two different handlers, one for the disk check and a
 ### Eye of the Beholder
 
 Again, great naming convention. There were earlier versions of this patch that were of the type where it just stayed in memory even after the game exits. This one starts the game and exits when it does, hence the "spawn" suffix I guess.
+
+## EXCEL.ASM
+
+### Spirit of Excalibur
+
+This is another one I readlly don't remember much about. I probably enjoyed the crack more than the game.
+

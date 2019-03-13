@@ -27,6 +27,9 @@ Start:
 
                 Old_SP     dw 0000h     ; Holds old Stack Pointer
                 Old_IntP1  dd 0000h     ; Holds old location of INT 21h (DOS)
+                Old_Int09  dd 0000h
+
+                DSeg       dw 0000h
 
                 Patch1_Vec EQU 15h
 
@@ -36,6 +39,12 @@ Patch_1         Proc    Near            ; Actual patch - Dirty work!
                 Cmp     AH, 0C0h
                 Jne     P1_NoDice
 
+                Push    AX
+                Push    DS
+                Pop     AX
+                Mov     CS:[DSeg], AX
+                Pop     AX
+                
                 Push    CS
                 Pop     ES
 
@@ -46,6 +55,45 @@ P1_NoDice:
                 Jmp     CS:Old_IntP1
 
 Patch_1         Endp
+
+
+Patch_2         Proc    Near
+                Assume  CS: Code_Seg, DS: Code_Seg
+
+                Pushf
+                Call    CS:[Old_Int09]
+
+                Push    AX
+                Mov     AH, 01h
+                Int     16h
+
+                Cmp     AL, '1'
+                Jne     P2_Check2
+                
+                Mov     AX, CS:[DSeg]
+                Push    DS
+                Mov     DS, AX
+                Inc     Byte Ptr DS:[0192h]
+                Inc     Byte Ptr DS:[00D2h]
+                Pop     DS
+                Jmp     P2_Done
+
+P2_Check2:
+                Cmp     AL, '2'
+                Jne     P2_Done
+
+                Mov     AX, CS:[DSeg]
+                Push    DS
+                Mov     DS, AX
+                Inc     Byte Ptr DS:[01C4h]
+                Inc     Byte Ptr DS:[0104h]
+                Pop     DS
+
+P2_Done:
+                Pop     AX
+                Iret
+
+Patch_2         Endp
 
 ISR_Install     Proc    Near
                 Assume  CS: Code_Seg, DS: Code_Seg
@@ -64,6 +112,17 @@ ISR_Install     Proc    Near
                 Mov     DX, Offset Patch_1      ; Install ours...
                 Int     21h
 
+                Mov     AX, 3509h
+                Int     21h
+
+                Mov     Word Ptr DS:[Old_Int09], BX
+                Mov     BX, ES
+                Mov     Word Ptr DS:[Old_Int09+2], BX
+
+                Mov     AX, 2509h
+                Mov     DX, Offset Patch_2
+                Int     21h
+
                 Pop     ES
 
                 Ret
@@ -80,6 +139,16 @@ ISR_Remove      Proc    Near
                 Mov     DX, Word Ptr DS:[Old_IntP1]
                 Pop     DS
                 Mov     AX, 2500h + Patch1_Vec
+                Int     21h
+
+                Pop     DS
+                Push    DS
+
+                Mov     AX, Word Ptr DS:[Old_Int09+2]
+                Push    AX
+                Mov     DX, Word Ptr DS:[Old_Int09]
+                Pop     DS
+                Mov     AX, 2509h
                 Int     21h
 
                 Pop     DS

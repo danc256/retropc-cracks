@@ -195,3 +195,9 @@ No comments.
 ### Before there was DELTREE there was NUKE
 
 A useful utility at the time. I remember either debugging some other DOS utilities or DOS itself to figure out that an 8.3 filename of all question marks gave good performance.
+
+## NUTARG.ASM
+
+### Targhan
+
+I have no idea why this patch is as complicated as it is. Likely an artifact of where I hooked the routine. The doc check is in the middle of the game, making it extra complicated to debug.

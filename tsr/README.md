@@ -219,3 +219,9 @@ Probably should have made the patch smart enough to figure out which version was
 ### Red Storm Rising
 
 No comments.
+
+## STARCON.ASM
+
+### Star Control
+
+I bought a copy of Star Control off eBay and the codewheel was a drag. Wanted to test the integrated debugger in DosBox-X so this is the first patch I did using more modern tooling.

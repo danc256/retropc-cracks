@@ -171,3 +171,9 @@ Don't remember much about it.
 ### Ironman
 
 Trainer. Two different versions in my archive, with the update making a tiny data tweak of unknown effect.
+
+## KEEN.ASM
+
+### Commander Keen (Episode 4?)
+
+I'm surprised I put so little information in this. Since it runs KEEN4E.EXE I'm assuming episode 4.

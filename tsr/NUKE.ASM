@@ -21,52 +21,32 @@ Mov     AH, 09h
 Int     21h
 ENDM
 
-;; ***** STRUCTURES *****
+;; ***** STRUCS *****
 
 S_FCB     STRUC
-  Extended  db         (0)
-  Reservd1  db  5  dup (0)
-  Attrib    db         (0)
-  Drive     db         (0)
-  FileName  db  11 dup (0)
-  Reservd2  db  25 dup (0)
-  S_End     EQU $ - 01h
+ Extended    db         0FFh
+ Reservd1    db  5  dup (0)
+ Attrib      db         0EFh
+ Drive       db         (0)
+ FileName    db  11 dup ('?')
+ Reservd2    db  25 dup (0)
+ S_End       EQU $ - 01h
 S_FCB     ENDS
 
-S_TEMP    STRUC
-  OverRide     db         (0)
-  CurrentDrive db         (0)          
-  CurrentDir   db 128 dup (0)
-  WorkingLen   dw         (0)
-  WorkingDrive db         (0) 
-  AsciiDrive   db         (0)                   
-               db         (0)  ;; Store a ':' here....
-  WorkingDir   db 128 dup (0)
-  SubOffset    dw         (0)
-S_TEMP    ENDS
 
 ;; ***** CODE *****
 
 Code_Seg        Segment
                 Assume  CS: Code_Seg, DS: Code_Seg
 
-                Org     FCBStart                ; Overlay a structure over
-                FCB     S_FCB ?                 ; the PSP FCB #1
-
                 Org     100h                    ; .COM file starts at 100h
 Start:
                 Jmp     Main                    ; Go to start of code
 
 ;; ***** STATIC DATA *****
-
-                FCB_DATA     db 0FFh            ; Extended FCB
-                             db 05 dup (00)     ; Reserved
-                             db 0EFh            ; Attributes (All but DIR)
-                             db 00h             ; DEFAULT drive selected
-                             db 11 dup ('?')    ; WildCard Mask (*.*)
-                DATALEN      EQU $-FCB_DATA     ; Size of Data Field
-
-                DirLevel     db 01              ; Current nesting level in dir
+                
+                Fcb          S_FCB {}           ; Initalized Struct (Per def)
+                DirLevel     dw 0000            ; Current nesting level in dir
                 BackUp       db '..',00         ; Used to back-up 1 dir level
 
 ;; ***** PROCEDURES *****
@@ -76,12 +56,6 @@ Init            Proc    Near
                 Assume  CS: Code_Seg, DS: Code_Seg
 
                 @DosPrint M_Banner                  ; Credits ('natch)    
-
-                Cld
-                Xor     AX, AX
-                Mov     DI, Offset Tmp
-                Mov     CX, TEMP_SIZE
-                Rep     Stosw
 
                 Mov     Tmp.CurrentDir,   '\'                 
                 Mov     Tmp.AsciiDrive+1, ':'
@@ -143,8 +117,9 @@ StrLen          Endp
 CommandLine     Proc    Near
                 Assume  CS: Code_Seg, DS: Code_Seg
 
-                Cmp     Byte Ptr DS:[ParamLen], 00
-                Je      CL_Fail                  ; No parameters specified
+                Xor     CH, CH
+                Mov     CL, [ParamLen]           ; Length of command line
+                Jcxz    CL_Fail                  ; No parameters specified
 
                 Mov     SI, ParamBuf             ; Start of command line
                 Cld
@@ -152,16 +127,16 @@ CL_ScanLoop:
                 Lodsb
                 Cmp     AL, ' '
                 Je      CL_ScanLoop              ; Eat spaces
-                Or      AL, AL
-                Je      CL_Done                  ; End of line
+                Jcxz    CL_Done                  ; End of line
 
                 Cmp     AL, '/'                  ; Option?
                 Je      CL_Options               ; Yes, process it
                                                  
-                Dec     SI
-                Cmp     Byte Ptr [SI+01h], ':'   ; No, Must be a filename
-                Mov     Tmp.SubOffset, SI
+                Cmp     Byte Ptr [SI], ':'       ; No, Must be a filename
                 Jne     CL_NoDrive               ; DRIVE not specified
+                Inc     SI
+                Mov     Tmp.SubOffset, SI
+                
                 
                 Cmp     AL, 'A'
                 Jb      CL_Fail
@@ -174,6 +149,7 @@ CL_ScanLoop:
                 Inc     SI
                 Inc     SI
 CL_NoDrive:
+                Dec     SI
                 Push    SI
                 Mov     DI, SI
                 Mov     CX, 0FFFFh

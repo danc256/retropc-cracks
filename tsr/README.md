@@ -159,3 +159,9 @@ Pretty sure this is incomplete as Gunship has THREE protection checks: A keydisk
 ### Hyperspeed
 
 Don't remember much about it. Looks like it's only a doc check.
+
+## INDY3.ASM
+
+### Indiana Jones and the Last Crusade
+
+Don't remember much about it.

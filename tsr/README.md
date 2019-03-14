@@ -183,3 +183,10 @@ I'm surprised I put so little information in this. Since it runs KEEN4E.EXE I'm 
 ### Helper program to defeat Microprose anti-debugger protection
 
 This was a TSR not a loader. During initialization you can see it would preserve the original values of INT 0x00 - 0x03 in 'Vectors' then hook the disk interrupt (0x13) looking for certain conditions. When those conditions were met, the interrupt handler would restore the first four vector's original values, re-enabling the debugger. I thought it required a keypress to restore the data. I guess it just looks for certain conditions. Anyway, this is moot with DOSBOX's integrated debugger.
+
+## NICKGOLF.ASM
+
+### Jack Nicklaus Golf
+
+No comments.
+

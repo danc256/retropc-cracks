@@ -213,3 +213,9 @@ One of the few collaborative efforts on a patch. Gunship may have been the only 
 ### Rampart
 
 Probably should have made the patch smart enough to figure out which version was run rather than make 2 entirely separate executables. Only difference between the two is a word offset and a little text in the splash screen.
+
+## RSR.ASM
+
+### Red Storm Rising
+
+No comments.

@@ -207,3 +207,9 @@ I have no idea why this patch is as complicated as it is. Likely an artifact of 
 ### Crack for Protostar
 
 One of the few collaborative efforts on a patch. Gunship may have been the only other one, but then again I thought I only wrote one trainer.
+
+## RAMPARTV.ASM and RAMPARTE.ASM
+
+### Rampart
+
+Probably should have made the patch smart enough to figure out which version was run rather than make 2 entirely separate executables. Only difference between the two is a word offset and a little text in the splash screen.

@@ -165,3 +165,9 @@ Don't remember much about it. Looks like it's only a doc check.
 ### Indiana Jones and the Last Crusade
 
 Don't remember much about it.
+
+## IRONCHT.ASM
+
+### Ironman
+
+Trainer. Two different versions in my archive, with the update making a tiny data tweak of unknown effect.

@@ -23,7 +23,7 @@ Start:
                 Done       db 00h
                 DataSegmt  dw 0000h
 
-                PlayerTable dw 4C73h, 4C73h+0Fh, 4D35h, 4D35h+0Fh, 4DF7h, 4DF7h+0Fh
+                PlayerTable dw 4C69h, 4C69h+0Fh, 4D2Bh, 4D2Bh+0Fh, 4DEDh, 4DEDh+0Fh
 
                 Patch1_Vec EQU 21h
 

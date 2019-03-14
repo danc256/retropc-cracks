@@ -190,3 +190,8 @@ This was a TSR not a loader. During initialization you can see it would preserve
 
 No comments.
 
+## NUKE.ASM
+
+### Before there was DELTREE there was NUKE
+
+A useful utility at the time. I remember either debugging some other DOS utilities or DOS itself to figure out that an 8.3 filename of all question marks gave good performance.

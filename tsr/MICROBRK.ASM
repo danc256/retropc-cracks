@@ -6,10 +6,12 @@ Start:
                 Jmp     Main_Loader
 
                 Old_ISR dd ?
-                Old_BUG dd ?
-                Vectors db 16 dup(00)
-                Done    dw 00
+                Old_Int21 dd ?
 
+                Done    db 00
+
+                Vectors db 200 dup(00)
+                
 ISR             Proc    Near
                 Assume  CS: Code_Seg, DS: Code_Seg
 
@@ -21,11 +23,15 @@ ISR             Proc    Near
                 Mov     AL, ES:[0017h]
                 And     AL, 10h
                 Jz      P1_Gotcha
+                Cmp     CS:[Done], 01
+                Je      P1_Bugger
+                Inc     CS:[Done]
 
                 Push    DS
                 Push    SI
                 Push    DI
                 Push    CX
+                Push    DX
                 
                 Push    CS
                 Pop     DS
@@ -33,22 +39,40 @@ ISR             Proc    Near
                 Xor     AX, AX
                 Mov     ES, AX
                 Xor     DI, DI
-                Mov     CX, 10h
+                Mov     CX, 200
                 Cld
 
                 Rep     Movsb
 
+                Xor     AX, AX
+                Mov     ES, AX
+                
+                Mov     DX, Offset ISR
+                Push    CS
+                Pop     AX
+                Mov     ES:[004Ch], DX
+                Mov     ES:[004Eh], AX
+
+                Mov     DX, Word Ptr CS:[Old_Int21]
+                Mov     AX, Word Ptr CS:[Old_Int21+2]
+                Mov     ES:[0084h], DX                
+                Mov     ES:[0086h], AX
+
+                Pop     DX
                 Pop     CX
                 Pop     DI
                 Pop     SI
                 Pop     DS
+                Pop     AX
+                Pop     ES
 
+P1_Bugger:
                 Int     03h
+                Jmp     ISR_Nope
 
 P1_Gotcha:
                 Pop     AX
                 Pop     ES
-
 
 ISR_Nope:
                 Jmp     CS:[Old_ISR]
@@ -60,6 +84,12 @@ End_Tsr         EQU $+1
 Main            Proc    Near
                 Assume  CS: Code_Seg, DS: Code_Seg
 Main_Loader:
+                Mov     AX, 3521h
+                Int     21h
+
+                Mov     Word Ptr [Old_Int21], BX
+                Mov     BX, ES
+                Mov     Word Ptr [Old_Int21+2], BX
 
                 Mov     AX, 3513h
                 Int     21h
@@ -72,20 +102,13 @@ Main_Loader:
                 Mov     DX, Offset ISR
                 Int     21h
 
-                Mov     AX, 3503h
-                Int     21h
-
-                Mov     Word Ptr [Old_Bug], BX
-                Mov     BX, ES
-                Mov     Word Ptr [Old_Bug+2], BX
-
                 Xor     AX, AX
                 Mov     DS, AX
                 Push    CS
                 Pop     ES
                 Xor     SI, SI
                 Mov     DI, Offset Vectors
-                Mov     CX, 10h
+                Mov     CX, 200
                 Cld
 
                 Rep     Movsb

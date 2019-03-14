@@ -201,3 +201,9 @@ A useful utility at the time. I remember either debugging some other DOS utiliti
 ### Targhan
 
 I have no idea why this patch is as complicated as it is. Likely an artifact of where I hooked the routine. The doc check is in the middle of the game, making it extra complicated to debug.
+
+## PROTO.ASM
+
+### Crack for Protostar
+
+One of the few collaborative efforts on a patch. Gunship may have been the only other one, but then again I thought I only wrote one trainer.

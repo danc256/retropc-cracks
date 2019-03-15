@@ -249,3 +249,9 @@ Another SCUMM-based game. No idea where the original non-working patch is. I pro
 ### Terminator 2029
 
 Game developers spend an agonizing amount of time balancing a game for pain and pleasure just for someone to patch it where it's fun for maybe 10 minutes and then you never touch it again because beating it is trivial. Then there's oldschool RPGs like The Bard's Tale that even if you cheat it still has no problem murdering you in your sleep. I must have hated this game to write something like this. The Tie Fighter trainer was probably the best approach because it was adjustable. Unsurprisingly I loved that game and played it for hours.
+
+## VGALEMMI.ASM and TGALEMMI.ASM
+
+### Lemmings II: Oh No! More Lemmings...
+
+Two patches for two binaries. Nice copypasta in TGALEMMI (comments reference The Immortal). Despite having a directory of 'clean' base shells I often just copied some other patch, manually scooped out the guts and started implementing the next one. While I did make some use of macros, the better way to structure this would have been to use two files to separate the base functionality from the program-specific functionality. Did not occur to me at the time.

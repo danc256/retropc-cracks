@@ -225,3 +225,10 @@ No comments.
 ### Star Control
 
 I bought a copy of Star Control off eBay and the codewheel was a drag. Wanted to test the integrated debugger in DosBox-X so this is the first patch I did using more modern tooling.
+
+
+## RUNGOLF.ASM
+
+### Hole-in-One Golf
+
+Odd in that it asks you to specify the name of the executable. Perhaps there were multiple executables depending on which video mode you wanted. Looks like it defeats a key disk check.

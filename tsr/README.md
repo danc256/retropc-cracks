@@ -243,3 +243,9 @@ Originally released then updated 4 years later. This seems to be a theme that th
 ### Day of the Tentacle (Maniac Mansion II)
 
 Another SCUMM-based game. No idea where the original non-working patch is. I probably just overwrote it with the update. The soup that is the directory I'm pulling all these patches from is the most hideous mess of inconsistency. It took 3 days sifting through backups of backups while running a de-duplicator program to get it distilled enough to even start looking at this.
+
+## TERM.ASM
+
+### Terminator 2029
+
+Game developers spend an agonizing amount of time balancing a game for pain and pleasure just for someone to patch it where it's fun for maybe 10 minutes and then you never touch it again because beating it is trivial. Then there's oldschool RPGs like The Bard's Tale that even if you cheat it still has no problem murdering you in your sleep. I must have hated this game to write something like this. The Tie Fighter trainer was probably the best approach because it was adjustable. Unsurprisingly I loved that game and played it for hours.

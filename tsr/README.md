@@ -255,3 +255,9 @@ Game developers spend an agonizing amount of time balancing a game for pain and 
 ### Lemmings II: Oh No! More Lemmings...
 
 Two patches for two binaries. Nice copypasta in TGALEMMI (comments reference The Immortal). Despite having a directory of 'clean' base shells I often just copied some other patch, manually scooped out the guts and started implementing the next one. While I did make some use of macros, the better way to structure this would have been to use two files to separate the base functionality from the program-specific functionality. Did not occur to me at the time.
+
+## ULTIMA.ASM
+
+### Ultima I and II
+
+Originally this patch was for Utima II but I found out it worked unmodified on Ultima I as well. This is one of the first patches I ever wrote. Spartan, stays in memory after execution, but it worked so good enough to start.

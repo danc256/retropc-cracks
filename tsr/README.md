@@ -226,7 +226,6 @@ No comments.
 
 I bought a copy of Star Control off eBay and the codewheel was a drag. Wanted to test the integrated debugger in DosBox-X so this is the first patch I did using more modern tooling.
 
-
 ## RUNGOLF.ASM
 
 ### Hole-in-One Golf
@@ -237,4 +236,10 @@ Odd in that it asks you to specify the name of the executable. Perhaps there wer
 
 ### Stunts
 
-Originally released then updated 4 years later. This seems to be a theme that there are long gaps between updates. I'm pretty sure these patches never made it outside an isolated area so there wasn't exactly a large number of people testing them, nor much in the way of viable feedback if there was a problem.
+Originally released then updated 4 years later. This seems to be a theme that there are long gaps between updates. I'm pretty sure these patches never made it outside an isolated area so there wasn't exactly a large number of people testing them, nor much in the way of viable feedback if there was a problem. 
+
+## TENTACLE.ASM
+
+### Day of the Tentacle (Maniac Mansion II)
+
+Another SCUMM-based game. No idea where the original non-working patch is. I probably just overwrote it with the update. The soup that is the directory I'm pulling all these patches from is the most hideous mess of inconsistency. It took 3 days sifting through backups of backups while running a de-duplicator program to get it distilled enough to even start looking at this.

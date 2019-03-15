@@ -261,3 +261,9 @@ Two patches for two binaries. Nice copypasta in TGALEMMI (comments reference The
 ### Ultima I and II
 
 Originally this patch was for Utima II but I found out it worked unmodified on Ultima I as well. This is one of the first patches I ever wrote. Spartan, stays in memory after execution, but it worked so good enough to start.
+
+## WOLF3D.ASM
+
+### Castle Wolfenstein 3D v1.1
+
+Splash screen says it only works for Wolfenstein v1.1. Another heavy-handed trainer that just let you go on a rampage. After having read the "Wolfenstein Black Book" and all the work that went into the game it seems criminal to patch a few bytes and throw the balance out the window.

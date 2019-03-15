@@ -267,3 +267,9 @@ Originally this patch was for Utima II but I found out it worked unmodified on U
 ### Castle Wolfenstein 3D v1.1
 
 Splash screen says it only works for Wolfenstein v1.1. Another heavy-handed trainer that just let you go on a rampage. After having read the "Wolfenstein Black Book" and all the work that went into the game it seems criminal to patch a few bytes and throw the balance out the window.
+
+## XEEN.ASM
+
+### Might and Magic: Clouds of Xeen
+
+This game was awesome. I hung onto the saved game archive for ages. Might still have it somewhere. Might and Magic is on a short list of games to revisit.

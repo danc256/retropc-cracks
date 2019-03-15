@@ -1,4 +1,4 @@
-; Generic Spawner shell, v1.22, (C) 1990, 1992 GHT, Ltd.  All Rights Reserved
+; Generic Spawner shell, v1.50, (C) 1990-1993 GHT, Ltd.  All Rights Reserved
 
 ; General purpose shell for writting .COM files that modify the IBM
 ; environment then execute another program under that environment.  
@@ -68,6 +68,9 @@ ENDM
 
                 CR         EQU 13, 10      ; Carriage Return, Line Feed
                 CRE        EQU 13, 10, '$' ; CR, LF + EOLN Symbol ('$')
+                
+                PATCH_REV  EQU '1.00'      ; Version for patch
+                BOOT_ME    EQU 'XEEN.EXE'  ; Startup file patch runs
 
 
                 IVect_1    EQU 21h         ; Vector's interrupt #
@@ -79,6 +82,8 @@ StartOfCode     EQU     $
                 Org     100h
 Start:
                 Jmp        Loader       ; Go to start of program
+                
+                BootFile   db BOOT_ME,00h ; Name of startup file
 
                 Env_Ptr    dw 0000      ; Table needed to spawn child
                 Param_Pl   dw 0080h     ; process (Contains pointer to
@@ -89,39 +94,38 @@ Start:
                 Fcb_2h     dw 0000h
 
                 Old_SP     dw 0000h     ; Holds old Stack Pointer
+                Ret_Addr   dw 0000h     ; Holds return address from Spawn
                 
+                Done_1     db 00h       ; Semaphore when patch is done
+
                 Old %IVect_1
-
-                BootFile   db 'XEEN.EXE',00h ; Name of startup file
-                Done_1     db 00
                 
-
 
 PHead %IVect_1
-              Cmp       CS:[Done_1], 01
-              Ja        P1_Skip
+              Cmp       CS:[Done_1], 01  ; Patched already?
+              Ja        P1_Skip          ; Yep, see ya l8r
               
-              Cmp       AH, 2Fh
-              Jne       P1_Skip
+              Cmp       AH, 2Fh          ; Correct DOS intr hooked?
+              Jne       P1_Skip          ; Nope
 
-              Inc       CS:[Done_1]
-              Cmp       CS:[Done_1], 01
-              Je        P1_Skip
+              Inc       CS:[Done_1]      
+              Cmp       CS:[Done_1], 01  ; Only patch on pass #2 (not 1)
+              Je        P1_Skip          ; Pass 1 (no patch, wrong spot)
 
               Push      AX
               Push      DS
 
               Mov       AX, DS
-              Sub       AX, 31F7h
-              Mov       DS, AX
+              Sub       AX, 31F7h        ; Segment to be patched is 31F7h
+              Mov       DS, AX           ; paragraphs away from current DS
 
-              Mov       Byte Ptr DS:[00BDh], 00
-              Mov       Byte Ptr DS:[00D8h], 00
+              Mov       Byte Ptr DS:[00BDh], 00  ; Bye-bye little JNE pricks!
+              Mov       Byte Ptr DS:[00D8h], 00  ; (Both of 'em)
 
-              Pop       DS
+              Pop       DS               ; Restore registers (always nice)
               Pop       AX
 P1_Skip:             
-              MJump %IVect_1
+              MJump %IVect_1             ; Oh yeah, do the DOS function!
 PTail %IVect_1
 
 ISR_Install     Proc    Near
@@ -161,21 +165,30 @@ Setup_Param     Endp
 
 Spawn           Proc    Near
                 Assume  CS: Code_Seg, DS: Code_Seg
+                
+                Pop     Ret_Addr
 
                 Mov     AH,  4Ah  ; Re-size memory to bare minimum
                 Mov     BX,  (Offset EndOfCode - StartOfCode + 15) shr 4
                 Int     21h
 
+                Push    ES              ; De-allocate environment
+                Mov     AX, Word Ptr DS:[002Ch]
+                Mov     ES, AX
+                Mov     AH, 49h
+                Int     21h
+                Pop     ES
+
                 Mov     AX, 4B00h       ; Prepare to execute LOAD.EXE
                 Mov     BX, Offset Env_Ptr
                 Mov     DX, Offset BootFile
-                Mov     DS:[Old_SP], SP
+                Mov     Old_SP, SP                
                 Int     21h
 
                 Mov     CX, CS          ; Restore all registers... (EXE
-                Mov     SS, CX          ; trashes ALL but CS:IP registers
-                Mov     SP, CS:[Old_SP] ; So we must restore everything
-                Mov     DS, CX          ; manually...)
+                Mov     DS, CX          ; trashes ALL but CS:IP registers
+                Mov     SS, CX          
+                Mov     SP, Old_SP
                 Mov     ES, CX
                 Jc      S_Error
 
@@ -183,6 +196,7 @@ S_OK:
                 Xor     AX, AX          ; Set Function PASSED
 
 S_Error:
+                Push    Ret_Addr
                 Ret
 Spawn           Endp
 
@@ -200,13 +214,10 @@ Loader:
                 Cmp     AL, 1Bh
                 Je      M_Bye
 
-                Mov     SP, Offset StackStart  ; MUST create our own stack,
-                                               ; Old one will be OVERWRITTEN 
-                Call    ISR_Install            ; when LOAD.EXE is RUN!!! 
-                                               ; (64 bytes is plenty...)
+                Call    ISR_Install              
                 Call    Setup_Param
-
                 Call    Spawn                
+                
                 Or      AX, AX
                 Jnz     M_CheckSpawnError
 
@@ -236,18 +247,18 @@ M_Bye:
 Main            Endp
 
 ; All error/status message text bodies...
-
-Error_Msg   db 'Sorry, an error has occured... Aborting...',CRE
+Error_Msg   db 'Sorry, an error has occured! <Aborting>',CRE
 NoBoot_Msg  db 'Couldn''t find the startup file!',CRE
-Intro_Msg   db 'Generic TSR Shell (c) 1990, 1992, 1993 GHT, Ltd.',CR
-            db 'Patch for Clouds of Xeen -- Patch v1.00',CR
-            db '<<<PRESS ANY KEY TO CONTINUE>>> - Or press ESC to Quit',CRE
 Bye_Msg     db 'Thank you for not illegally using this program! --GHT',CRE
 
-NewStack   dw 32 Dup(00)
-StackStart EQU $-2
-
 EndOfCode       EQU $
+
+Intro_Msg   db 'Generic TSR Shell v1.50 (c) 1990-1993 Gen. Half-Track, Ltd.',CR
+            db 'Patch v',PATCH_REV,', compiled ',??time,' on ',??date,' patching file ',BOOT_ME,CR
+            db 'This patch is NOT to be used in a manner that would violate the rights of',CR
+            db 'the owner of any commercial software!  This patch is PD, distributed AS IS',CR
+            db 'Patch for CLOUDS OF XEEN (c) 1992 New World Computing',CR
+            db '<<<PRESS ANY KEY TO CONTINUE>>> - Or press ESC to Quit',CRE
 
 Code_Seg        Ends
 End             Start

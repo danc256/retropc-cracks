@@ -89,6 +89,8 @@ Start:
                 Fcb_2h     dw 0000h
 
                 Old_SP     dw 0000h     ; Holds old Stack Pointer
+
+                P1_Done    dw 0000h
                 
                 Old %IVect_1
 
@@ -97,19 +99,28 @@ Start:
 
 
 PHead %IVect_1
-                Cmp     AH, 1Ah
+                Cmp     AH, 30h
+                Jne     P1_Skip
+
+                Cmp     Word Ptr CS:[P1_Done], 0000h
                 Jne     P1_Skip
 
                 Push    BP
                 Mov     BP, SP
 
-                Cmp     [BP+02], 3295h
+                Cmp     Word Ptr [BP+02], 0016h
                 Jne     P1_Skip2
 
-                Cmp     Byte Ptr DS:[0A6C8h], 00
+                Cmp     Word Ptr DS:[00481h], 03E80h
                 Jne     P1_Skip2
 
-                Mov     Byte Ptr DS:[0A6C8h], 01
+                Mov     Word Ptr DS:[00481h], 006C6h
+
+                Mov     Byte Ptr DS:[00485h], 01
+
+                Mov     Byte Ptr DS:[00486h], 0EBh
+
+                Inc     Word Ptr CS:[P1_Done]
 P1_Skip2:
                 Mov     SP, BP
                 Pop     BP
@@ -232,8 +243,9 @@ Main            Endp
 
 Error_Msg   db 'Sorry, an error has occured... Aborting...',CRE
 NoBoot_Msg  db 'Couldn''t find the startup file!',CRE
-Intro_Msg   db 'Generic TSR Shell (c) 1990, 1992 GHT, Ltd.',CR
+Intro_Msg   db 'Generic TSR Shell (c) 1990, 1992-1996 GHT, Ltd.',CR
             db 'Patch for STUNTS (c) BR0DERBUND Software - Not for illegal use',CR
+            db 'Patch v1.1 - Feature added: Patch now works...',CR
             db '<<<PRESS ANY KEY TO CONTINUE>>> - Or press ESC to Quit',CRE
 Bye_Msg     db 'Thank you for not illegally using this program! --GHT',CRE
 

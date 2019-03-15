@@ -3,7 +3,7 @@ These are some crusty old PC game cracks I did long ago. Preserved unmodified fo
 
 ## About the collection
 
-This is a mix of TSR (Terminate and Stay Resident) cracks and sector edits. The easiest cracks were just patching out a few bytes and done. More sophisticateed patches checked for certain conditions in memory then either modified code or data to defeat the protection. This was useful for bypassing checksums, self-modifying code, compressed binaries, and multi-factor protection. Microprose is a good example of using both disk and documentation checks (though they later published patches on their FTP site that removed the disk checks).
+This is a mix of TSR (Terminate and Stay Resident) cracks and sector edits. The easiest cracks were just patching out a few bytes and done. More sophisticated patches checked for certain conditions in memory then either modified code or data to defeat the protection. This was useful for bypassing checksums, self-modifying code, compressed binaries, and multi-factor protection. Microprose is a good example of using both disk and documentation checks (though they later published patches on their FTP site that removed the disk checks).
 
 ## Philosophy
 

@@ -232,3 +232,9 @@ I bought a copy of Star Control off eBay and the codewheel was a drag. Wanted to
 ### Hole-in-One Golf
 
 Odd in that it asks you to specify the name of the executable. Perhaps there were multiple executables depending on which video mode you wanted. Looks like it defeats a key disk check.
+
+## STUNT.ASM
+
+### Stunts
+
+Originally released then updated 4 years later. This seems to be a theme that there are long gaps between updates. I'm pretty sure these patches never made it outside an isolated area so there wasn't exactly a large number of people testing them, nor much in the way of viable feedback if there was a problem.
